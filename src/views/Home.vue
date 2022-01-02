@@ -7,6 +7,10 @@
     <Header />
   </div>
   <div class="main-container">
+    <div class="greeting-container">
+      <h1>Welcome (Back), {{currentUserName}}</h1>
+      <h4>current time is {{ timestamp }} </h4>
+    </div>
     <div class="progress-container">
       <div class="progress">
         <div class="progress-bar progress-bar-striped bg-success" role="progressbar" :style = "progressStyle" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">{{ progressPercent}}%</div>
@@ -14,29 +18,83 @@
       <p v-if="progressPercent != 100">You have completed {{ tasksCompleted.length }} tasks out of {{ tasks.length + tasksCompleted.length }} tasks</p>
       <p v-else>Great! You have completed all the tasks! Perhaps start a new one?</p>
     </div>
-    <div class="cards-container">
-      <div v-if="newsfeedTasks.length != 0">
-        <div class="card" v-for="task in newsfeedTasks" :key="task">
-          <div class="card-body">
-            <h5 class="card-title">{{ task.title }}</h5>
-            <h6 class="card-subtitle mb-2 text-muted"> Last updated at {{ task.lastUpdated }} </h6>
-            <p class="card-text"> Discription</p>
-            <div class="card-a">
-              <a href="#" class="card-link">View</a>
-              <a href="#" class="card-link">Mark as Read</a>
+    <div class="body-container">
+      <div class="cards-container">
+        <div class="cards-cards" v-if="newsfeedTasks.length != 0">
+          <div class="card" v-for="task in newsfeedTasks" :key="task">
+            <div class="card-body">
+              <h5 class="card-title">{{ task.title }}</h5>
+              <h6 class="card-subtitle mb-2 text-muted"> Last updated at {{ task.lastUpdated }} </h6>
+              <p class="card-text"> Discription</p>
+              <div class="card-a">
+                <a href="#" class="card-link">View</a>
+                <a href="#" class="card-link">Mark as Read</a>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="cards-cards" v-else>
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title">No new updates</h5>
+              <p>You have checked all updates</p>
             </div>
           </div>
         </div>
       </div>
-      <div v-else>
-        <div class="card">
-          <div class="card-body">
-            <h5 class="card-title">No new updates</h5>
-            <p>You have checked all updates</p>
-          </div>
+      <div class="table-container">
+        <div class="table-tabs">
+          <ul class="nav nav-tabs nav-fill">
+            <li class= "nav-item" :key="i" v-for="(column, i) in columns">
+              <a href="#" class="nav-link" :class="{ active: IsActive(column) }" aria-current="page" v-on:click = "SortBy(column)">
+                  {{ column }}
+              </a>
+            </li>
+          </ul>
         </div>
-      </div>
+        <div class="table-table">
+          <table class="table" v-if="sortKey != 'Completed'">
+            <thead class="thead">
+              <tr>
+                <th scope="col">Title</th>
+                <th scope="col">Due Date</th>
+                <th scope="col">Last Updated</th>
+              </tr>
+            </thead>
+            <tbody v-for="task in tasks" :key="task.id">
+              <tr @click="ShowTask(task)">
+                <td>{{ task.title }}</td>
+                <td>{{ task. due }}</td>
+                <td>{{ task.lastUpdated }} </td>
+              </tr>
+            </tbody>
+          </table>
+          <table class="table" v-else>
+            <thead class="thead">
+              <tr>
+                <th scope="col">Title</th>
+                <th scope="col">Due Date</th>
+                <th scope="col">Completed</th>
+              </tr>
+            </thead>
+            <tbody v-for="task in tasksCompleted" :key="task.id">
+              <tr @click="ShowTask(task)">
+                <td>{{ task.title }}</td>
+                <td>{{ task. due }}</td>
+                <td>{{ task.lastUpdated }} </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>      
+      </div>      
     </div>
+    <div class="create-container">
+      <button class="btn">
+        <router-link to="/create" class="nav-link" style="text-decoration: none; color: inherit;">Create New Task</router-link>
+      </button>
+    </div>
+  </div>
+  <div class="footer-container">
   </div>
   <!-- <div class="body-container">
     <div class="container" :class="mode">
@@ -199,6 +257,24 @@ import Header from '../components/Header.vue'
 export default {
   components: {
     Header
+  },
+
+  data: () => ({
+    timestamp: ''
+  }),
+
+  created() {
+    setInterval(this.getNow, 1000)
+  },
+
+  methods:{
+    getNow: function(){
+      const today = new Date();
+      const date = today.getFullYear() + '-' + (today.getMonth()+1) + '-' + today.getDate()
+      const time = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds()
+      const dateTime = date + ' ' + time;
+      this.timestamp = dateTime
+    }
   },
 
   setup(){
@@ -464,7 +540,7 @@ export default {
     font-family: 'Poppins', sans-serif;
   }
   .header-container{
-    min-height: 5vh;
+    height: 5vh;
   }
 
   .main-container {
@@ -473,26 +549,59 @@ export default {
     align-items: center;
   }
   
+  .greeting-container {
+    height: 10vh;
+    width: 80vw;
+    background-color: chartreuse;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
   .progress-container {
-    padding-top: 50px;
+    background-color: antiquewhite;
+    height: 10vh;
+    width: 80vw;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .progress-container p{
+    text-align: center;
   }
 
   .progress {
     width: 80vw;
+    height: 25px;
+  }
+
+  .body-container {
+    display: flex;
+    flex-direction: row;
   }
 
   .cards-container {
-    padding-top: 50px;
+    width: 25vw;
     display: flex;
     flex-direction: row;
     align-items: center;
-    width: 90vw !important;
-    overflow-x: scroll;
+    height: 55vh !important;
+    overflow-y: scroll;
     justify-content: center;
+    background-color: aquamarine;
+  }
+
+  .cards-cards {
+    display: flex;
+    flex-direction: column;
+    max-height: 55vh;
   }
 
   .card {
-    min-width: 18rem;
+    min-height: 11rem;
+    width: 16rem;
+    margin-bottom: 30px;
   }
 
   .card-a {
@@ -500,14 +609,95 @@ export default {
     flex-direction: row;
     justify-content: space-between;
   }
+
+  .table-container {
+    width: 55vw;
+    align-items: center;
+    background-color: cadetblue;
+  }
+  .table-tabs {
+    height: 5vh;
+    margin-left: 30px;
+  }
+
+  .table-table {
+    height: 50vh !important;
+    overflow-y: scroll;
+    margin-left: 30px;
+
+  }
+
+  .create-container{
+    width: 80vw;
+    height: 10vh;
+    align-items: center;
+    background-color: crimson;
+    display: flex;
+    justify-content: center;
+  }
+
+  .btn{
+    width: 80vw;
+    height: 5vh;
+    border: none;
+    border-radius: 50px;
+    background: #014128;
+    color: #fff;
+    font-weight: 600;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .footer-container{
+    height: 10vh;
+    background-color: black;
+  }
+
+  @media only screen and (max-width: 991px){
+    .body-container{
+      display: flex;
+      flex-direction: column;
+      height: 55vh;
+      width: 80vw;
+    }
+    
+    .cards-container{
+      width: 80vw;
+      height: 20vh;
+    }
+
+    .cards-cards{
+      display: flex;
+      flex-direction: row;
+    }
+
+    .card{
+      margin-bottom: 0;
+    }
+
+    .table-container{
+      width: 80vw;
+      height: 35vh;
+    }
+
+    .table-tabs{
+      margin-left: 0;
+    }
+
+    .table-table{
+      margin-left: 0;
+      height: 25vh !important;
+      overflow-y: scroll;
+    }
+  }
   /* -------------------------------------------- */
-  .body-container{
+  /* .body-container{
     display: flex;
     align-items: center;
     justify-content: center;
     min-height: 95vh;
     background: #000;
-  }
+  } */
   
   .container{
     position: relative;
@@ -640,7 +830,9 @@ export default {
     justify-content: space-between;
   }
 
-  .btn{
+
+
+  /* .btn{
     width: 150px;
     height: 50px;
     border: none;
@@ -651,7 +843,7 @@ export default {
     margin: 10px 0;
     text-transform: uppercase;
     cursor: pointer;
-  }
+  } */
 
   .btn-comment{
     width: 100px;

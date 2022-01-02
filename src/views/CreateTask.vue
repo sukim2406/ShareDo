@@ -61,7 +61,8 @@ export default {
             contributors: [],
             owner: '',
             completed: false,
-            lastUpdated: new Date().toISOString().slice(0,16)
+            lastUpdated: new Date().toISOString().slice(0,16),
+            newsfeed: true,
         })
 
         onBeforeMount(async () => {

@@ -72,7 +72,7 @@ export default {
 
 <style scoped>
     * {
-        min-height: 5vh;
+        height: 5vh;
     }
     .nav{
         background: #000;
