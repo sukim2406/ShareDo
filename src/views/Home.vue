@@ -24,7 +24,8 @@
           <div class="card" v-for="task in newsfeedTasks" :key="task">
             <div class="card-body">
               <h5 class="card-title">{{ task.title }}</h5>
-              <h6 class="card-subtitle mb-2 text-muted"> Last updated at {{ task.lastUpdated }} </h6>
+              <h6 class="card-subtitle mb-2 text-muted"> Last updated at</h6>
+              <h6 class="card-subtitle mb-2 text-muted"> {{ task.lastUpdated }}</h6>
               <p class="card-text"> Discription</p>
               <div class="card-a">
                 <a href="#" class="card-link">View</a>
@@ -90,11 +91,12 @@
     </div>
     <div class="create-container">
       <button class="btn">
-        <router-link to="/create" class="nav-link" style="text-decoration: none; color: inherit;">Create New Task</router-link>
+        <router-link to="/create" class="nav-link">Create New Task</router-link>
       </button>
     </div>
   </div>
   <div class="footer-container">
+    <Footer />
   </div>
   <!-- <div class="body-container">
     <div class="container" :class="mode">
@@ -250,13 +252,16 @@
 
 <script>
 import { ref, reactive, onBeforeMount } from 'vue'
+import { useRouter } from 'vue-router'
 import { authService } from '../firebase-auth'
 import { taskService, userService } from '../firebase-store'
 import Header from '../components/Header.vue'
+import Footer from '../components/Footer.vue'
 
 export default {
   components: {
-    Header
+    Header,
+    Footer,
   },
 
   data: () => ({
@@ -278,6 +283,7 @@ export default {
   },
 
   setup(){
+    const router = useRouter()
     const commentText = ref("")
     const componentKey = ref(false)
     const active = "active"
@@ -324,9 +330,6 @@ export default {
           //   tasksCompleted.value.sort((a,b) => new Date(a.lastUpdated) - new Date(b.lastUpdated))
           // })
           currentUserName.value = userService.doc.data().name
-
-          console.log(userService.doc.data().name)
-
         })
     })
 
@@ -338,7 +341,6 @@ export default {
           tasks.value.push({...taskService.doc.data(), id: id})
           if(taskService.doc.data().newsfeed){
             newsfeedTasks.value.push({...taskService.doc.data(), id: id})
-            console.log(newsfeedTasks.value)
           }
         }
         else{
@@ -348,10 +350,7 @@ export default {
         tasksCompleted.value.sort((a,b) => new Date(a.lastUpdated) - new Date(b.lastUpdated))
         newsfeedTasks.value.sort((a,b) => new Date(a.lastUpdated) - new Date(b.lastUpdated))
         progressPercent.value = Math.round((tasksCompleted.value.length / (tasks.value.length + tasksCompleted.value.length)) * 100)
-        console.log(tasksCompleted.value.length, "------" , tasks.value.length)
-        console.log("newsfeed -" , newsfeedTasks.value.length)
         ProgressFunction(progressPercent.value)
-        console.log(progressStyle.value)
       })
     }
 
@@ -364,9 +363,7 @@ export default {
     }
 
     const ShowTask = async (task) => {
-      console.log("task clicked", task.id)
       await taskService.getTask(task.id)
-      console.log(taskService.doc.data())
       form.title = taskService.doc.data().title
       form.due = taskService.doc.data().due
       form.description = taskService.doc.data().description
@@ -377,7 +374,10 @@ export default {
       form.id = task.id
       form.comments = taskService.doc.data().comments
       
-      TaskModifyMode()
+      // TaskModifyMode()
+      console.log(form)
+      router.push({ name: 'Create', params: { id: task.id}})
+
     }
 
     const TaskListMode = () => {
@@ -389,30 +389,24 @@ export default {
     }
 
     const SortByLast = () => {
-      console.log("Sort by last updated clicked")
       if(reverse.value){
         tasks.value.sort((a,b) => new Date(b.lastUpdated) - new Date(a.lastUpdated))
       }
       else{
         tasks.value.sort((a,b) => new Date(a.lastUpdated) - new Date(b.lastUpdated))
       }
-
-      console.log(tasks.value)
     }
 
     const SortByDue = () => {
-      console.log("Sort by due clicked")
       if(reverse.value){
         tasks.value.sort((a,b) => new Date(b.due) - new Date(a.due))
       }
       else{
         tasks.value.sort((a,b) => new Date(a.due) - new Date(b.due))
       }
-      console.log(tasks.value)
     }
 
     const SortByTitle = () => {
-      console.log("Sort by title clicked")
       function compare(a, b){
         if(reverse.value){
           if (a.title < b.title){
@@ -434,13 +428,11 @@ export default {
         }
       }
       tasks.value.sort(compare)
-      console.log(tasks.value)
     }
 
     const SortBy = (key) => {
       reverse.value = (sortKey.value == key) ? ! reverse.value : false;
       sortKey.value = key
-      console.log(reverse.value)
       if(sortKey.value == "Last Updated"){
         SortByLast()
       }
@@ -466,9 +458,7 @@ export default {
       form.lastUpdated = new Date().toISOString().slice(0,16)
       await taskService.updateTask(form.id, form)
         .then(() => {
-          console.log(componentKey.value)
           componentKey.value = !componentKey.value
-          console.log(componentKey.value)
           LoadTasks()
           ReloadPage()
         })
@@ -538,9 +528,8 @@ export default {
     padding: 0;
     box-sizing: border-box;
     font-family: 'Poppins', sans-serif;
-  }
-  .header-container{
-    height: 5vh;
+    background-color: black;
+    color: white;
   }
 
   .main-container {
@@ -552,14 +541,20 @@ export default {
   .greeting-container {
     height: 10vh;
     width: 80vw;
-    background-color: chartreuse;
     display: flex;
     flex-direction: column;
     justify-content: center;
   }
 
+  .greeting-container h1{
+    font-weight: 600;
+  }
+
+  .greeting-container h4{
+    text-align: right;
+  }
+
   .progress-container {
-    background-color: antiquewhite;
     height: 10vh;
     width: 80vw;
     display: flex;
@@ -589,49 +584,79 @@ export default {
     height: 55vh !important;
     overflow-y: scroll;
     justify-content: center;
-    background-color: aquamarine;
   }
 
   .cards-cards {
     display: flex;
     flex-direction: column;
-    max-height: 55vh;
+    height: 55vh;
   }
 
   .card {
-    min-height: 11rem;
+    background-color: #014128;
+    height: 11rem;
     width: 16rem;
     margin-bottom: 30px;
+  }
+
+  .card-body {
+    background-color: inherit;
+  }
+
+  .card-title, .card-subtitle, .card-text {
+    background-color: inherit;
   }
 
   .card-a {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
+    background-color: inherit;
+  }
+
+  .card-a a{
+    background-color: inherit;
   }
 
   .table-container {
     width: 55vw;
     align-items: center;
-    background-color: cadetblue;
   }
+
   .table-tabs {
     height: 5vh;
     margin-left: 30px;
+  }
+
+  .table-tabs a{
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .table-tabs a.active{
+    background-color: #014128;
+    color: white;
   }
 
   .table-table {
     height: 50vh !important;
     overflow-y: scroll;
     margin-left: 30px;
+  }
 
+  .table-table table th{
+    color: grey
+  }
+
+  .table-table table tbody tr:hover {
+    background-color: #014128;
+    cursor: pointer;
   }
 
   .create-container{
     width: 80vw;
     height: 10vh;
     align-items: center;
-    background-color: crimson;
     display: flex;
     justify-content: center;
   }
@@ -646,33 +671,48 @@ export default {
     font-weight: 600;
     text-transform: uppercase;
     cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
 
-  .footer-container{
-    height: 10vh;
-    background-color: black;
+  button.btn a{
+    background-color: transparent;
+    text-decoration: none;
+    color: inherit;
   }
 
   @media only screen and (max-width: 991px){
+
     .body-container{
       display: flex;
       flex-direction: column;
       height: 55vh;
       width: 80vw;
     }
-    
+    .progress-container{
+      justify-content: end;
+    }
+
     .cards-container{
-      width: 80vw;
+      width: 80vw !important;
       height: 20vh;
+      overflow-x: scroll;
+      overflow-y: unset;
     }
 
     .cards-cards{
       display: flex;
       flex-direction: row;
+      max-width: 80vw;
+      height: 20vh;
     }
 
     .card{
       margin-bottom: 0;
+      margin-right: 10px;
+      min-width: 16rem;
+      max-height: 11rem !important;
     }
 
     .table-container{

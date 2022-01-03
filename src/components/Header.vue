@@ -77,4 +77,16 @@ export default {
     .nav{
         background: #000;
     }
+
+    .container a {
+        color: #009056;
+    }
+
+    .show ul {
+        text-align: right;
+    }
+
+    .show ul li{
+        background-color: #009056;
+    }
 </style>
