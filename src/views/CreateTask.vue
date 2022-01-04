@@ -12,39 +12,40 @@
             <h4>Date: {{ timestamp }}</h4>
         </div>
         <div class="form-container">
-            <form>
+            <form @submit.prevent="">
                 <div class="form-firstline">
                     <div class="input-title">
                         <h5>Title</h5>
-                        <input type="text" class="form-control" id="taskTitle" placeholder="Title">
+                        <input v-if="modify" type="text" class="form-control" id="taskTitle" placeholder="Title" v-model="form.title" disabled>
+                        <input v-else type="text" class="form-control" id="taskTitle" placeholder="Title" v-model="form.title" style="background-color: black">
                     </div>
                     <div class="input-due">
                         <h5>Due</h5>
-                        <input type="date" class="form-control" id="dueDate">
+                        <input type="date" class="form-control" id="dueDate" v-model="form.due">
                     </div>
                 </div>
                 <div class="form-secondline">
                     <div class="input-description">
                         <h5>Description</h5>
-                        <textarea id="description" cols="15" rows="10" class="form-control" placeholder="What needs to be done?"></textarea>
+                        <textarea id="description" cols="15" rows="10" class="form-control" placeholder="What needs to be done?" v-model="form.description"></textarea>
                     </div>
                     <div class="input-contributors">
                         <h5>Contributors</h5>
-                        <textarea id="contributors" cols="15" rows="9" class="form-control"></textarea>
+                        <textarea id="contributors" cols="15" rows="9" class="form-control" v-model="contributorsStr" disabled></textarea>
                         <div class="contributors-element">
-                            <input type="text" class="form-control" id="email">
-                            <button>Add</button>
+                            <input type="text" class="form-control" id="email" v-model="email">
+                            <button @click="AddContributor">Add / Remove</button>
                         </div>
                     </div>
                 </div>
                 <div class="form-thirdline">
                     <div class="input-creator">
                         <h5>Creator</h5>
-                        <input type="text" class="form-control" id="creator" placeholder="Title">
+                        <input type="text" class="form-control" id="creator" placeholder="Creator" v-model="form.owner" disabled>
                     </div>
                     <div class="input-lastupdated">
                         <h5>Last Updated</h5>
-                        <input type="date" class="form-control" id="lastUpdated">
+                        <input type="text" class="form-control" id="lastUpdated" v-model="form.lastUpdated">
                     </div>
                 </div>
                 <div class="form-comments">
@@ -76,6 +77,16 @@
                                     <td> tempcomment5</td>
                                     <td> temptime5</td>
                                 </tr>
+                                <tr>
+                                    <td> tempuser6</td>
+                                    <td> tempcomment6</td>
+                                    <td> temptime6</td>
+                                </tr>
+                                <tr>
+                                    <td> tempuser7</td>
+                                    <td> tempcomment7</td>
+                                    <td> temptime7</td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -91,41 +102,11 @@
                 </div>            
             </form>
         </div>
-    </div>
-    <!-- <div class="container">
-        <div class="d-sm-flex">
-            <div>
-                <h2>
-                    Create a New Task
-                </h2>
-                <form @submit.prevent="CreateTask">
-                    <div class="row g-3">
-                        <div class="col-12">
-                            <input type="text" class="form-control" id="taskTitle" placeholder="Title" v-model="form.title" required>
-                        </div>
-                        <div class="col-12">
-                            <input type="date" class="form-control" id="dueDate" v-model="form.due" required>
-                        </div>
-                        <div class="col-12">
-                            <textarea id="description" cols="30" rows="10" class="form-control" placeholder="What needs to be done?" v-model="form.description"></textarea>
-                        </div>
-                        <div class="col-12">
-                            <div class="input-group mb-3">
-                                <input type="text" class="form-control" placeholder="Add contributors" aria-label="Add contributors" aria-describedby="basic-addon2" v-model="email">
-                                <div class="input-group-append">
-                                    <button class="btn btn-outline-secondary" type=button @click="AddContributor">Add / Remove</button>
-                                </div>
-                            </div>
-                            <select class="col-12 custom-select" multiple>
-                                <option :key="i" v-for="(contributor, i) in form.contributors">{{ contributor }}</option>
-                            </select>
-                        </div>
-                        <button type="submit" class="btn btn-success mt-3">Create</button>
-                    </div>
-                </form>
-            </div>
+        <div class="mobilebtn-container">
+            <button>Save</button>
+            <button>Cancel</button>
         </div>
-    </div> -->
+    </div>
     <div class="footer-container">
         <Footer />
     </div>
@@ -135,7 +116,7 @@
 import { onBeforeMount, reactive, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { authService } from '../firebase-auth'
-import { createTask, userService } from '../firebase-store'
+import { createTask, userService, taskService } from '../firebase-store'
 import firebase from 'firebase'
 import Header from '../components/Header.vue'
 import Footer from '../components/Footer.vue'
@@ -166,11 +147,11 @@ export default {
 
     setup(){
         const modify = ref(false)
-        const taskId = ref('')
         const router = useRouter()
         const route = useRoute()
-        const email = ref('')
+        const email = ref('test@test.com')
         const form = reactive({
+            id: '',
             title: '',
             due: new Date().toISOString().slice(0,10),
             description: '',
@@ -181,22 +162,38 @@ export default {
             newsfeed: true,
         })
 
+        const contributorsStr = ref('')
+
         onBeforeMount(async () => {
             await authService.authenticated()
-            form.owner = authService.user.email
-            form.contributors.push(form.owner)
+                .then(() => {
+                    form.owner = authService.user.email
+                    form.contributors.push(form.owner)
+                    contributorsStr.value = (form.contributors.join()).replace(',', '\n')
+                })
             // if(typeof(route.params.id) != 'undefined'){
             //     taskId.value = route.params.id
             // }
             if(typeof(route.params.id) == 'undefined'){
-                taskId.value = ''
                 modify.value = false
             }
             else{
-                taskId.value = route.params.id
+                form.id = route.params.id
                 modify.value = true
+                GetTask(form.id)
             }
         })
+
+        const GetTask = async (taskId) => {
+            await taskService.getTask(taskId)
+            form.title = taskService.doc.data().title
+            form.due = taskService.doc.data().due
+            form.contributors = taskService.doc.data().contributors
+            form.description = taskService.doc.data().description
+            form.lastUpdated = taskService.doc.data().lastUpdated
+
+            console.log(taskService.doc.data())
+        } 
 
         const AddContributor = async () => {
             let duplicate = false
@@ -214,12 +211,14 @@ export default {
                         })
                         if(duplicate){
                             form.contributors.pop(email.value)
+                            contributorsStr.value = (form.contributors.join()).replace(',', '\n')
                         }
                         else if(form.owner == email.value){
                             alert("Owner cannot be removed")
                         }
                         else{
                             form.contributors.push(email.value)
+                            contributorsStr.value = (form.contributors.join()).replace(',', '\n')
                         }
 
                         userService.resetDoc()
@@ -251,8 +250,9 @@ export default {
         return {
             form,
             email,
-            taskId,
             modify,
+            contributorsStr,
+            GetTask,
             AddContributor,
             CreateTask,
         }
@@ -268,6 +268,10 @@ export default {
         font-family: 'Poppins', sans-serif;
         background-color: black;
         color: white;
+    }
+
+    h5{
+        color:  #014128;
     }
 
     .main-container{
@@ -312,8 +316,16 @@ export default {
         width:30vw;
     }
 
+    .input-title input {
+        background-color: #014128;
+    }
+
     .input-due{
         width: 30vw;
+    }
+
+    ::-webkit-calendar-picker-indicator {
+    filter: invert(1);
     }
 
     .form-secondline{
@@ -342,7 +354,15 @@ export default {
     }
 
     .contributors-element button{
-        width: 5vw;
+        width: 10vw;
+        border: none;
+        color: #009056;
+        text-transform: uppercase;
+    }
+
+    .contributors-element button:hover{
+        background-color: #009056;
+        color: white;
     }
 
     .form-thirdline{
@@ -361,12 +381,18 @@ export default {
     }
 
     .form-comments{
-        padding-top: 3vh;
+        padding-top: 5vh;
         width: 80vw;
+        height: 20vh;
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
+    }
+
+    .comments{
+        height: 20vh !important;
+        overflow-y: scroll;
     }
 
     .form-comments table{
@@ -384,6 +410,23 @@ export default {
 
     .comment input{
         width:30vw;
+        margin-left: 3vw;
+        margin-right: 1vw;
+    }
+
+    .comment button{
+        width: 7vw;
+        border: none;
+        /* border-width: 1px;
+        border-color: #014128; */
+        color: #009056;
+        text-transform: uppercase;
+        cursor: pointer;
+    }
+
+    .comment button:hover{
+        background-color: #009056;
+        color: white;
     }
 
     .form-btns{
@@ -394,23 +437,126 @@ export default {
         justify-content: space-evenly;
     }
 
+    .form-btns button{
+        width: 20vw;
+        border: none;
+        border-radius: 50px;
+        background: #014128;
+        color: #fff;
+        font-weight: 600;
+        text-transform: uppercase;
+        cursor: pointer;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .form-btns button:hover{
+        background-color: #009056;
+    }
+
+    .mobilebtn-container{
+        display: none;
+    }
+
     @media only screen and (max-width: 991px){
         .form-container{
-            min-height: 75vh !important;
+            min-height: 65vh !important;
             overflow-y: scroll;
+            overflow-x: hidden;
+        }
+        .form-container form{
+            height: 65vh !important;
         }
         .form-firstline{
+            padding-top: 5vh;
             flex-direction: column;
             height: unset;
+            width: 80vw;
+            align-items: center;
+        }
+        .input-title{
+            width: 60vw;
+        }
+        .input-due{
+            padding-top: 3vh;
+            width: 60vw;
         }
 
         .form-secondline{
+            padding-top: 3vh;
             flex-direction: column;
-            height: unset;
+            width: 80vw;
+            align-items: center;
+        }
+
+        .input-description{
+            width: 60vw;
+        }
+
+        .input-contributors{
+            padding-top: 3vh;
+            width: 60vw;
+        }
+
+        .contributors-element input{
+            width: 40vw;
+        }
+
+        .contributors-element button{
+            width: 15vw;
         }
 
         .form-thirdline{
             flex-direction: column;
+            padding-top: 3vh;
+            width: 80vw;
+            align-items: center;
+        }
+
+
+        .input-creator{
+            width: 60vw;
+        }
+
+        .input-lastupdated{
+            padding-top: 3vw;
+            width: 60vw;
+        }
+
+        .form-comments{
+            padding-bottom: 1vh;
+            width: 80vw;
+        }
+
+        .form-btns{
+            display: none;
+        }
+
+        .mobilebtn-container{
+            display: flex;
+            flex-direction: row;
+            height: 10vh;
+            width: 60vw;
+            justify-content: space-evenly;
+            align-items: center;
+        }
+
+        .mobilebtn-container button{
+            width: 15vw;
+            height: 5vh;
+            border: none;
+            border-radius: 50px;
+            background: #014128;
+            color: #fff;
+            font-weight: 600;
+            text-transform: uppercase;
+            cursor: pointer;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .mobilebtn-container button:hover{
+            background-color: #009056;
         }
     }
 </style>
