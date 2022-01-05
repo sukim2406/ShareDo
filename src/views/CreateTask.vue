@@ -12,12 +12,12 @@
             <h4>Date: {{ timestamp }}</h4>
         </div>
         <div class="form-container">
-            <form @submit.prevent="">
+            <div class="form">
                 <div class="form-firstline">
                     <div class="input-title">
                         <h5>Title</h5>
                         <input v-if="modify" type="text" class="form-control" id="taskTitle" placeholder="Title" v-model="form.title" disabled>
-                        <input v-else type="text" class="form-control" id="taskTitle" placeholder="Title" v-model="form.title" style="background-color: black">
+                        <input v-else type="text" class="form-control" id="taskTitle" placeholder="Title" v-model="form.title" style="background-color: black" required>
                     </div>
                     <div class="input-due">
                         <h5>Due</h5>
@@ -31,9 +31,9 @@
                     </div>
                     <div class="input-contributors">
                         <h5>Contributors</h5>
-                        <textarea id="contributors" cols="15" rows="9" class="form-control" v-model="contributorsStr" disabled></textarea>
+                        <textarea id="contributors" cols="15" rows="9" class="form-control" v-model="contributorsStr" disabled placeholder="No contributors yet"></textarea>
                         <div class="contributors-element">
-                            <input type="text" class="form-control" id="email" v-model="email">
+                            <input type="text" class="form-control" id="email" v-model="email" placeholder="Email Here">
                             <button @click="AddContributor">Add / Remove</button>
                         </div>
                     </div>
@@ -45,65 +45,44 @@
                     </div>
                     <div class="input-lastupdated">
                         <h5>Last Updated</h5>
-                        <input type="text" class="form-control" id="lastUpdated" v-model="form.lastUpdated">
+                        <input type="text" class="form-control" id="lastUpdated" v-model="form.lastUpdated" disabled>
                     </div>
                 </div>
                 <div class="form-comments">
                     <div class="comments">
-                        <table>
+                        <table v-if="!form.comments">
                             <tbody>
                                 <tr>
-                                    <td> tempuser1</td>
-                                    <td> tempcomment1</td>
-                                    <td> temptime1</td>
+                                    <td> No Comments Yet</td>
                                 </tr>
+                            </tbody>
+                        </table>
+                        <table v-else>
+                            <tbody v-for="comment in form.comments" :key="comment">
                                 <tr>
-                                    <td> tempuser2</td>
-                                    <td> tempcomment2</td>
-                                    <td> temptime2</td>
-                                </tr>
-                                <tr>
-                                    <td> tempuser3</td>
-                                    <td> tempcomment3</td>
-                                    <td> temptime3</td>
-                                </tr>
-                                <tr>
-                                    <td> tempuser4</td>
-                                    <td> tempcomment4</td>
-                                    <td> temptime4</td>
-                                </tr>
-                                <tr>
-                                    <td> tempuser5</td>
-                                    <td> tempcomment5</td>
-                                    <td> temptime5</td>
-                                </tr>
-                                <tr>
-                                    <td> tempuser6</td>
-                                    <td> tempcomment6</td>
-                                    <td> temptime6</td>
-                                </tr>
-                                <tr>
-                                    <td> tempuser7</td>
-                                    <td> tempcomment7</td>
-                                    <td> temptime7</td>
+                                    <td>{{ comment.user }}</td>
+                                    <td>{{ comment.comment }}</td>
+                                    <td>{{ comment.time }}</td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                     <div class="comment">
-                        <a href="#">@Username</a>
-                        <input type="text">
-                        <button>post</button>
+                        <a href="#">@{{ currentUser }}</a>
+                        <input type="text" v-model="commentText">
+                        <button @click="PostComment">post</button>
                     </div>
                 </div>    
                 <div class="form-btns">
-                    <button>Save</button>
-                    <button>Cancel</button>
-                </div>            
-            </form>
+                    <button @click="SaveTask">Save</button>
+                    <button>
+                        <router-link to="/" style="text-decoration: none; background-color:inherit; color:inherit;">Cancel</router-link> 
+                    </button>
+                </div>           
+            </div>
         </div>
         <div class="mobilebtn-container">
-            <button>Save</button>
+            <button @click="SaveTask">Save</button>
             <button>Cancel</button>
         </div>
     </div>
@@ -149,7 +128,9 @@ export default {
         const modify = ref(false)
         const router = useRouter()
         const route = useRoute()
-        const email = ref('test@test.com')
+        const email = ref('')
+        const currentUser = ref('')
+        const commentText = ref('')
         const form = reactive({
             id: '',
             title: '',
@@ -160,39 +141,49 @@ export default {
             completed: false,
             lastUpdated: new Date().toISOString().slice(0,16),
             newsfeed: true,
+            comments: [],
         })
 
         const contributorsStr = ref('')
 
         onBeforeMount(async () => {
             await authService.authenticated()
-                .then(() => {
-                    form.owner = authService.user.email
-                    form.contributors.push(form.owner)
-                    contributorsStr.value = (form.contributors.join()).replace(',', '\n')
+                .then(async () => {
+                    await userService.getUserByEmail(authService.user.email)
+                        .then(() => {
+                            currentUser.value = userService.doc.data().name
+                        })
                 })
             // if(typeof(route.params.id) != 'undefined'){
             //     taskId.value = route.params.id
             // }
             if(typeof(route.params.id) == 'undefined'){
                 modify.value = false
+                form.owner = authService.user.email
+                form.contributors.push(form.owner)
+                contributorsStr.value = (form.contributors.join()).replace(',', '\n')
             }
             else{
                 form.id = route.params.id
                 modify.value = true
                 GetTask(form.id)
             }
+
+            console.log("asaaa", contributorsStr.value)
         })
 
         const GetTask = async (taskId) => {
             await taskService.getTask(taskId)
-            form.title = taskService.doc.data().title
-            form.due = taskService.doc.data().due
-            form.contributors = taskService.doc.data().contributors
-            form.description = taskService.doc.data().description
-            form.lastUpdated = taskService.doc.data().lastUpdated
-
-            console.log(taskService.doc.data())
+                .then(() => {
+                    form.title = taskService.doc.data().title
+                    form.due = taskService.doc.data().due
+                    form.contributors = taskService.doc.data().contributors
+                    form.description = taskService.doc.data().description
+                    form.lastUpdated = taskService.doc.data().lastUpdated
+                    form.comments = taskService.doc.data().comments
+                    form.owner = taskService.doc.data().owner
+                    contributorsStr.value = (form.contributors.join()).replace(',', '\n')
+                })
         } 
 
         const AddContributor = async () => {
@@ -227,24 +218,64 @@ export default {
             console.log(form.contributors)
         }
 
-        const CreateTask = async () => {
-            await createTask({...form})
-                .then(async (result) => {
-                    await userService.getUserName(authService.user.uid)
-                    // console.log("user = ", userService.doc.data())
-                    userService.updateUser({
-                        tasks: firebase.firestore.FieldValue.arrayUnion(result.id)
+        const PostComment = async () => {
+            if(!modify.value){
+                alert("Comments can be posted after the task has been created")
+            }
+            else{
+                form.lastUpdated = new Date().toISOString().slice(0,16)
+                let commentObj = new reactive({
+                    user: currentUser.value,
+                    time: form.lastUpdated,
+                    comment: commentText.value
+                })
+                console.log(commentObj)
+                form.comments.push(commentObj)
+
+                await taskService.updateTask(form.id, form)
+            }
+        }
+
+        const SaveTask = async () => {
+            if(!modify.value){
+                form.comments = [{'user': currentUser.value, 'comment': 'Task Created', 'time': new Date().toISOString().slice(0,16)}]
+                await createTask({...form})
+                    .then(async (result) => {
+                        await userService.getUserName(authService.user.uid)
+                        // console.log("user = ", userService.doc.data())
+                        let taskObj = new reactive({
+                            id: result.id,
+                            lastUpdated: '',
+                        })
+                        userService.updateUser({
+                            tasks: firebase.firestore.FieldValue.arrayUnion(taskObj)
+                        })
+                        form.contributors.forEach(async contributor => {
+                            if(contributor != form.owner){
+                                await userService.getUserByEmail(contributor)
+                                userService.updateUser({
+                                    tasks: firebase.firestore.FieldValue.arrayUnion(taskObj)
+                                })
+                            }
+                        })
+                        router.replace('/')
                     })
-                    form.contributors.forEach(async contributor => {
+            }
+            else{
+                await taskService.updateTask(form.id, form)
+                .then(() => {
+                    form.contributors.forEach(async contributor=> {
                         if(contributor != form.owner){
                             await userService.getUserByEmail(contributor)
                             userService.updateUser({
-                                tasks: firebase.firestore.FieldValue.arrayUnion(result.id)
+                                tasks: firebase.firestore.FieldValue.arrayUnion(form.id)
                             })
                         }
                     })
                     router.replace('/')
                 })
+            }
+
         }
 
         return {
@@ -252,9 +283,12 @@ export default {
             email,
             modify,
             contributorsStr,
+            currentUser,
+            commentText,
             GetTask,
             AddContributor,
-            CreateTask,
+            SaveTask,
+            PostComment,
         }
     }
 }
@@ -343,6 +377,10 @@ export default {
         width: 30vw;
     }
 
+    .input-contributors textarea{
+        background-color: #014128;
+    }
+
     .contributors-element{
         display: flex;
         flex-direction: row;
@@ -376,8 +414,16 @@ export default {
         width: 30vw;
     }
 
+    .input-creator input{
+        background-color: #014128;
+    }
+
     .input-lastupdated{
         width: 30vw;
+    }
+
+    .input-lastupdated input{
+        background-color: #014128;
     }
 
     .form-comments{
@@ -406,6 +452,10 @@ export default {
         display: flex;
         flex-direction: row;
         justify-content:end;
+    }
+
+    .comment a{
+        color: #009056;
     }
 
     .comment input{
@@ -464,7 +514,7 @@ export default {
             overflow-y: scroll;
             overflow-x: hidden;
         }
-        .form-container form{
+        .form{
             height: 65vh !important;
         }
         .form-firstline{

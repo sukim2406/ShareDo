@@ -19,17 +19,17 @@
       <p v-else>Great! You have completed all the tasks! Perhaps start a new one?</p>
     </div>
     <div class="body-container">
-      <div class="cards-container">
+      <div class="cards-container" :key="reloadKey">
         <div class="cards-cards" v-if="newsfeedTasks.length != 0">
           <div class="card" v-for="task in newsfeedTasks" :key="task">
             <div class="card-body">
               <h5 class="card-title">{{ task.title }}</h5>
               <h6 class="card-subtitle mb-2 text-muted"> Last updated at</h6>
               <h6 class="card-subtitle mb-2 text-muted"> {{ task.lastUpdated }}</h6>
-              <p class="card-text"> Discription</p>
+              <p class="card-text"> Due : {{ task.due }}</p>
               <div class="card-a">
-                <a href="#" class="card-link">View</a>
-                <a href="#" class="card-link">Mark as Read</a>
+                <button @click="ShowTask(task)">View</button>
+                <button @click="BtnMarkAsRead(task)">Mark as Read</button>
               </div>
             </div>
           </div>
@@ -38,7 +38,7 @@
           <div class="card">
             <div class="card-body">
               <h5 class="card-title">No new updates</h5>
-              <p>You have checked all updates</p>
+              <p>No new updates at this time</p>
             </div>
           </div>
         </div>
@@ -265,7 +265,8 @@ export default {
   },
 
   data: () => ({
-    timestamp: ''
+    timestamp: '',
+    reloadKey: 0,
   }),
 
   created() {
@@ -279,6 +280,9 @@ export default {
       const time = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds()
       const dateTime = date + ' ' + time;
       this.timestamp = dateTime
+    },
+    forceRerender() {
+      this.reloadKey += 1
     }
   },
 
@@ -335,16 +339,20 @@ export default {
 
     const LoadTasks = () => {
       taskIds.value = userService.doc.data().tasks
-      taskIds.value.forEach(async id => {
-        await taskService.getTask(id)
+      console.log(taskIds.value)
+      taskIds.value.forEach(async task => {
+        await taskService.getTask(task.id)
         if(taskService.doc.data().completed == false){
-          tasks.value.push({...taskService.doc.data(), id: id})
-          if(taskService.doc.data().newsfeed){
-            newsfeedTasks.value.push({...taskService.doc.data(), id: id})
+          tasks.value.push({...taskService.doc.data(), id: task.id})
+          if(task.lastUpdated != taskService.doc.data().lastUpdated){
+            newsfeedTasks.value.push({...taskService.doc.data(), id: task.id})
           }
+          // if(taskService.doc.data().newsfeed){
+          //   newsfeedTasks.value.push({...taskService.doc.data(), id: id.id})
+          // }
         }
         else{
-          tasksCompleted.value.push({...taskService.doc.data(), id: id})
+          tasksCompleted.value.push({...taskService.doc.data(), id: task.id})
         }
         tasks.value.sort((a,b) => b.title - a.title)
         tasksCompleted.value.sort((a,b) => new Date(a.lastUpdated) - new Date(b.lastUpdated))
@@ -485,6 +493,26 @@ export default {
       progressStyle.value = "width: " + percent + "% ;"
     }
 
+    const BtnMarkAsRead = async (task) => {
+      let tempTasks = userService.doc.data().tasks
+      tempTasks.forEach(tempTask => {
+        if(tempTask.id == task.id){
+          tempTask.lastUpdated = task.lastUpdated
+        }
+      })
+      await userService.updateUser({
+        tasks: tempTasks
+      })
+
+      console.log('testing' , tempTasks)
+      ForceReload()
+    }
+
+    const ForceReload = () => {
+      this.reloadKey += 1
+      console.log("hello?" , this.reloadKey)
+    }
+
     return {
       currentUserName,
       taskIds,
@@ -516,7 +544,9 @@ export default {
       LoadTasks,
       ReloadPage,
       BtnComment,
-      ProgressFunction
+      ProgressFunction,
+      BtnMarkAsRead,
+      ForceReload,
     }
   }
 }
@@ -601,6 +631,21 @@ export default {
 
   .card-body {
     background-color: inherit;
+  }
+
+  .card-body .card-a button{
+    border:none;
+    background-color: inherit;
+    color: #009056;
+  }
+
+  .card-body .card-a button:hover{
+    color: white;
+  }
+
+  .card-body p {
+    background: inherit;
+    margin-bottom: .5rem;
   }
 
   .card-title, .card-subtitle, .card-text {
