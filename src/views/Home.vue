@@ -19,7 +19,7 @@
       <p v-else>Great! You have completed all the tasks! Perhaps start a new one?</p>
     </div>
     <div class="body-container">
-      <div class="cards-container" :key="reloadKey">
+      <div class="cards-container">
         <div class="cards-cards" v-if="newsfeedTasks.length != 0">
           <div class="card" v-for="task in newsfeedTasks" :key="task">
             <div class="card-body">
@@ -266,7 +266,6 @@ export default {
 
   data: () => ({
     timestamp: '',
-    reloadKey: 0,
   }),
 
   created() {
@@ -287,6 +286,7 @@ export default {
   },
 
   setup(){
+    const reloadKey =ref(0)
     const router = useRouter()
     const commentText = ref("")
     const componentKey = ref(false)
@@ -356,7 +356,7 @@ export default {
         }
         tasks.value.sort((a,b) => b.title - a.title)
         tasksCompleted.value.sort((a,b) => new Date(a.lastUpdated) - new Date(b.lastUpdated))
-        newsfeedTasks.value.sort((a,b) => new Date(a.lastUpdated) - new Date(b.lastUpdated))
+        newsfeedTasks.value.sort((a,b) => new Date(b.lastUpdated) - new Date(a.lastUpdated))
         progressPercent.value = Math.round((tasksCompleted.value.length / (tasks.value.length + tasksCompleted.value.length)) * 100)
         ProgressFunction(progressPercent.value)
       })
@@ -371,21 +371,25 @@ export default {
     }
 
     const ShowTask = async (task) => {
-      await taskService.getTask(task.id)
-      form.title = taskService.doc.data().title
-      form.due = taskService.doc.data().due
-      form.description = taskService.doc.data().description
-      form.contributors = taskService.doc.data().contributors
-      form.owner = taskService.doc.data().owner
-      form.updated = taskService.doc.data().lastUpdated
-      form.completed = taskService.doc.data().completed
-      form.id = task.id
-      form.comments = taskService.doc.data().comments
-      
-      // TaskModifyMode()
-      console.log(form)
-      router.push({ name: 'Create', params: { id: task.id}})
-
+      if(!task.completed){
+        await taskService.getTask(task.id)
+        form.title = taskService.doc.data().title
+        form.due = taskService.doc.data().due
+        form.description = taskService.doc.data().description
+        form.contributors = taskService.doc.data().contributors
+        form.owner = taskService.doc.data().owner
+        form.updated = taskService.doc.data().lastUpdated
+        form.completed = taskService.doc.data().completed
+        form.id = task.id
+        form.comments = taskService.doc.data().comments
+        
+        // TaskModifyMode()
+        console.log(form)
+        router.push({ name: 'Create', params: { id: task.id}})
+      }
+      else{
+        console.log("completed task")
+      }
     }
 
     const TaskListMode = () => {
@@ -505,15 +509,37 @@ export default {
       })
 
       console.log('testing' , tempTasks)
-      ForceReload()
+
+      taskIds.value.splice(0)
+      tasks.value.splice(0)
+      newsfeedTasks.value.splice(0)
+
+      await userService.getUserName(authService.user.uid)
+        .then(() => {
+          LoadTasks()
+        })
+      // taskIds.value.forEach(async task => {
+      //   await taskService.getTask(task.id)
+      //   if(taskService.doc.data().completed == false){
+      //     if(task.lastUpdated != taskService.doc.data().lastUpdated){
+      //       newsfeedTasks.value.push({...taskService.doc.data(), id: task.id})
+      //     }
+      //   }
+      // })
+      
+      // newsfeedTasks.value.sort((a,b) => new Date(b.lastUpdated) - new Date(a.lastUpdated))
+
+
+      
     }
 
     const ForceReload = () => {
-      this.reloadKey += 1
-      console.log("hello?" , this.reloadKey)
+      reloadKey.value += 1
+      console.log("hello?" , reloadKey.value)
     }
 
     return {
+      reloadKey,
       currentUserName,
       taskIds,
       tasks,

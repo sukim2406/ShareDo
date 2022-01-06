@@ -2,8 +2,21 @@
   <head>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css" integrity="sha384-DyZ88mC6Up2uqS4h/KRgHuoeGwBcD4Ng9SiP4dIRy0EXTlnuz47vAwmeGwVChigm" crossorigin="anonymous">
   </head>
-  <Header />  
-  <div class="card card-body mt-4">
+  <div class="header-container">
+    <Header />
+  </div>  
+  <div class="main-container">
+    <div class="sidebar-container">
+
+    </div>
+    <div class="info-container">
+
+    </div>
+  </div>
+  <div class="footer-container">
+    <Footer />
+  </div>
+  <!-- <div class="card card-body mt-4">
     <h1>Info, {{ email }}</h1>
     <form @submit.prevent="update">
       <div class="form-group">
@@ -18,8 +31,27 @@
       </div>
       <button type="submit" class="btn btn-primary mt-3" @click="Update">Update</button>    
     </form>
-  </div>
+  </div> -->
 </template>
+
+<style scoped>
+  .main-container{
+    background: chartreuse;
+    height: 85vh;
+    display: flex;
+    flex-direction: row;
+  }
+
+  .sidebar-container{
+    background: grey;
+    width: 30vw;
+  }
+
+  .info-container{
+    background: cornflowerblue;
+    width: 70vw;
+  }
+</style>
 
 <script>
 import { ref, onBeforeMount } from 'vue'
@@ -27,10 +59,12 @@ import { authService } from '../firebase-auth'
 import { userService } from '../firebase-store'
 import { useRouter } from 'vue-router'
 import Header from '../components/Header.vue'
+import Footer from '../components/Footer.vue'
 
 export default {
   components: {
-    Header
+    Header,
+    Footer
   },
 
   setup (){

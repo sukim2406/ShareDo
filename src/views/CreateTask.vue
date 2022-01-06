@@ -11,8 +11,14 @@
             <h1>Create a New Task</h1>
             <h4>Date: {{ timestamp }}</h4>
         </div>
+        <div class="mobilecompleted-container" v-if="modify">
+            <button @click="CompleteTask">Completed</button>
+        </div>
         <div class="form-container">
             <div class="form">
+                <div class="form-completed" v-if="modify">
+                    <button @click="CompleteTask">Completed</button>
+                </div>
                 <div class="form-firstline">
                     <div class="input-title">
                         <h5>Title</h5>
@@ -161,7 +167,7 @@ export default {
                 modify.value = false
                 form.owner = authService.user.email
                 form.contributors.push(form.owner)
-                contributorsStr.value = (form.contributors.join()).replace(',', '\n')
+                contributorsStr.value = (form.contributors.join()).replaceAll(',', '\n')
             }
             else{
                 form.id = route.params.id
@@ -182,7 +188,7 @@ export default {
                     form.lastUpdated = taskService.doc.data().lastUpdated
                     form.comments = taskService.doc.data().comments
                     form.owner = taskService.doc.data().owner
-                    contributorsStr.value = (form.contributors.join()).replace(',', '\n')
+                    contributorsStr.value = (form.contributors.join()).replaceAll(',', '\n')
                 })
         } 
 
@@ -202,14 +208,14 @@ export default {
                         })
                         if(duplicate){
                             form.contributors.pop(email.value)
-                            contributorsStr.value = (form.contributors.join()).replace(',', '\n')
+                            contributorsStr.value = (form.contributors.join()).replaceAll(',', '\n')
                         }
                         else if(form.owner == email.value){
                             alert("Owner cannot be removed")
                         }
                         else{
                             form.contributors.push(email.value)
-                            contributorsStr.value = (form.contributors.join()).replace(',', '\n')
+                            contributorsStr.value = (form.contributors.join()).replaceAll(',', '\n')
                         }
 
                         userService.resetDoc()
@@ -237,6 +243,7 @@ export default {
         }
 
         const SaveTask = async () => {
+            form.lastUpdated = new Date().toISOString().slice(0,16)
             if(!modify.value){
                 form.comments = [{'user': currentUser.value, 'comment': 'Task Created', 'time': new Date().toISOString().slice(0,16)}]
                 await createTask({...form})
@@ -266,9 +273,13 @@ export default {
                 .then(() => {
                     form.contributors.forEach(async contributor=> {
                         if(contributor != form.owner){
+                            let taskObj = new reactive({
+                                id: form.id,
+                                lastUpdated: '',
+                            })
                             await userService.getUserByEmail(contributor)
                             userService.updateUser({
-                                tasks: firebase.firestore.FieldValue.arrayUnion(form.id)
+                                tasks: firebase.firestore.FieldValue.arrayUnion(taskObj)
                             })
                         }
                     })
@@ -276,6 +287,23 @@ export default {
                 })
             }
 
+        }
+
+        const CompleteTask = async () =>{
+            if(confirm("Task Completed? (Cannot be undone)")){
+                let completedComment = reactive({
+                    'user': currentUser.value,
+                    'comment': 'Task Completed',
+                    'time': new Date().toISOString().slice(0,16)
+                })
+                form.comments.push(completedComment)
+                form.completed = true
+                await taskService.updateTask(form.id, form)
+                    .then(() => {
+                        router.replace('/')
+                    })
+            }
+            console.log("that")
         }
 
         return {
@@ -289,6 +317,7 @@ export default {
             AddContributor,
             SaveTask,
             PostComment,
+            CompleteTask,
         }
     }
 }
@@ -332,6 +361,10 @@ export default {
         text-align: right;
     }
 
+    .mobilecompleted-container{
+        display: none;
+    }
+
     .form-container {
         height: 75vh;
         width: 80vw;
@@ -340,7 +373,30 @@ export default {
         justify-content: space-evenly;
     }
 
+    .form-completed{
+        display: flex;
+        justify-content: center;
+    }
+    
+    .form-completed button{
+        width: 67vw;
+        border: none;
+        border-radius: 50px;
+        background: #014128;
+        color: #fff;
+        font-weight: 600;
+        text-transform: uppercase;
+        cursor: pointer;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .form-completed button:hover{
+        background: #009056;
+    }
+
     .form-firstline{
+        padding-top: 2vh;
         display: flex;
         flex-direction: row;
         justify-content: space-evenly;
@@ -363,7 +419,7 @@ export default {
     }
 
     .form-secondline{
-        padding-top: 3vh;
+        padding-top: 2vh;
         display: flex;
         flex-direction: row;
         justify-content: space-evenly;
@@ -404,7 +460,7 @@ export default {
     }
 
     .form-thirdline{
-        padding-top: 3vh;
+        padding-top: 2vh;
         display: flex;
         flex-direction: row;
         justify-content: space-evenly;
@@ -427,7 +483,7 @@ export default {
     }
 
     .form-comments{
-        padding-top: 5vh;
+        padding-top: 2vh;
         width: 80vw;
         height: 20vh;
         display: flex;
@@ -509,6 +565,31 @@ export default {
     }
 
     @media only screen and (max-width: 991px){
+        .mobilecompleted-container{
+            padding-top: 5vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 80vw;
+        }
+
+        .mobilecompleted-container button{
+            width: 60vw;
+            border: none;
+            border-radius: 50px;
+            background: #014128;
+            color: #fff;
+            font-weight: 600;
+            text-transform: uppercase;
+            cursor: pointer;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .mobilecompleted-container button:hover{
+            background: #009056;
+        }
+
         .form-container{
             min-height: 65vh !important;
             overflow-y: scroll;
@@ -517,8 +598,13 @@ export default {
         .form{
             height: 65vh !important;
         }
+
+        .form-completed{
+            display: none;
+        }
+
         .form-firstline{
-            padding-top: 5vh;
+            padding-top: 3vh;
             flex-direction: column;
             height: unset;
             width: 80vw;
