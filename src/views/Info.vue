@@ -53,15 +53,15 @@
           <div class="stats-container">
             <div class="counter total-tasks">
               <p>Total</p>
-              <h1>1</h1>
+              <h1>{{ numbTotal }}</h1>
             </div>
             <div class="counter open-tasks">
               <p>Open</p>
-              <h1>1</h1>
+              <h1>{{ numbOpen }}</h1>
             </div>
             <div class="counter completed-tasks">
               <p>Completed</p>
-              <h1>1</h1>
+              <h1>{{ numbCompleted }}</h1>
             </div>
           </div>
         </div>
@@ -80,7 +80,7 @@
 <script>
 import { ref, reactive, onBeforeMount } from 'vue'
 import { authService } from '../firebase-auth'
-import { userService } from '../firebase-store'
+import { taskService, userService } from '../firebase-store'
 import { useRouter } from 'vue-router'
 import Header from '../components/Header.vue'
 import Footer from '../components/Footer.vue'
@@ -92,9 +92,13 @@ export default {
   },
 
   setup (){
+    const tasks = ref([])
     const router = useRouter()
     const email = ref('')
     const uid = ref('')
+    const numbTotal = ref(0)
+    const numbOpen = ref(0)
+    const numbCompleted = ref(0)
 
     const form = reactive ({
       name: '',
@@ -114,8 +118,20 @@ export default {
             form.name = userService.doc.data().name
             form.depart = userService.doc.data().depart
             form.greet = userService.doc.data().greet
+            tasks.value = userService.doc.data().tasks
           })
-
+        tasks.value.forEach(async task => {
+          await taskService.getTask(task.id)
+            .then(() => {
+              numbTotal.value += 1
+              if(taskService.doc.data().completed){
+                numbCompleted.value += 1
+              }
+              else{
+                numbOpen.value += 1
+              }
+            })
+        })
     })
     // onUpdated(async () =>{
     //   await userService.getUserName(uid.value)
@@ -148,6 +164,10 @@ export default {
       email,
       uid,
       form,
+      numbTotal,
+      numbOpen,
+      numbCompleted,
+      tasks,
       Update,
       SaveBtn,
       BackBtn,

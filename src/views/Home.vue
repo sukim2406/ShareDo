@@ -8,7 +8,7 @@
   </div>
   <div class="main-container">
     <div class="greeting-container">
-      <h1>Welcome (Back), {{currentUserName}}</h1>
+      <h1>Welcome (Back), {{currentUserName.toUpperCase()}}</h1>
       <h4>current time is {{ timestamp }} </h4>
     </div>
     <div class="progress-container">
@@ -333,7 +333,7 @@ export default {
           //   tasks.value.sort((a,b) => b.title - a.title)
           //   tasksCompleted.value.sort((a,b) => new Date(a.lastUpdated) - new Date(b.lastUpdated))
           // })
-          currentUserName.value = userService.doc.data().name
+          currentUserName.value = (userService.doc.data().name)
         })
     })
 

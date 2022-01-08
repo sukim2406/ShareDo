@@ -37,10 +37,17 @@
                     </div>
                     <div class="input-contributors">
                         <h5>Contributors</h5>
-                        <textarea id="contributors" cols="15" rows="9" class="form-control" v-model="contributorsStr" disabled placeholder="No contributors yet"></textarea>
+                        <textarea id="contributors" cols="15" rows="8" class="form-control" v-model="contributorsStr" disabled placeholder="No contributors yet"></textarea>
                         <div class="contributors-element">
                             <input type="text" class="form-control" id="email" v-model="email" placeholder="Email Here">
                             <button @click="AddContributor">Add / Remove</button>
+                        </div>
+                    </div>
+                    <div class="input-subtasks">
+                        <h5>Subtasks</h5>
+                        <textarea id="subtasks" cols="15" rows="9" class="form-control" placceholder="Subtasks Can be added after task is created" v-model="subtasksStr"></textarea>
+                        <div class="subtasks-element">
+                            <button>Create Subtask</button>
                         </div>
                     </div>
                 </div>
@@ -422,15 +429,16 @@ export default {
         padding-top: 2vh;
         display: flex;
         flex-direction: row;
-        justify-content: space-evenly;
+        justify-content: space-around;
+        align-items: center;
     }
 
     .input-description{
-        width: 30vw;
+        width: 20vw;
     }
 
     .input-contributors{
-        width: 30vw;
+        width: 20vw;
     }
 
     .input-contributors textarea{
@@ -444,11 +452,11 @@ export default {
     }
 
     .contributors-element input{
-        width: 20vw;
+        width: 15vw;
     }
 
     .contributors-element button{
-        width: 10vw;
+        width: 5vw;
         border: none;
         color: #009056;
         text-transform: uppercase;
@@ -456,6 +464,28 @@ export default {
 
     .contributors-element button:hover{
         background-color: #009056;
+        color: white;
+    }
+
+    .input-subtasks{
+        width: 20vw;
+    }
+
+    .subtasks-element{
+        display: flex;
+        flex-direction: row;
+        justify-content: end;
+    }
+
+    .subtasks-element button{
+        width: 10vw;
+        border: none;
+        color: #009056;
+        text-transform: uppercase;
+    }
+
+    .subtasks-element button:hover{
+        background: #009056;
         color: white;
     }
 
@@ -640,6 +670,15 @@ export default {
 
         .contributors-element button{
             width: 15vw;
+        }
+
+        .input-subtasks{
+            padding-top: 3vh;
+            width: 60vw;
+        }
+
+        .subtasks-element button{
+            width: 20vw;
         }
 
         .form-thirdline{
