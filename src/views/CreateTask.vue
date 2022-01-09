@@ -45,9 +45,36 @@
                     </div>
                     <div class="input-subtasks">
                         <h5>Subtasks</h5>
-                        <textarea id="subtasks" cols="15" rows="9" class="form-control" placceholder="Subtasks Can be added after task is created" v-model="subtasksStr"></textarea>
+                        <div class="input-subtasks-table">
+                            <table v-if="form.subtasks.length === 0">
+                                <tbody>
+                                    <tr>
+                                        <td> No Subtasks assigned</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <table v-else>
+                                <tbody>
+                                    <tr>
+                                        <td>subtask 1</td>
+                                        <td>completed</td>
+                                        <td>1.1.2022</td>
+                                    </tr>
+                                    <tr>
+                                        <td>subtask 1</td>
+                                        <td>completed</td>
+                                        <td>1.1.2022</td>
+                                    </tr>
+                                    <tr>
+                                        <td>subtask 1</td>
+                                        <td>completed</td>
+                                        <td>1.1.2022</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                         <div class="subtasks-element">
-                            <button>Create Subtask</button>
+                            <button @click="CreateSubtask">Create Subtask</button>
                         </div>
                     </div>
                 </div>
@@ -138,6 +165,8 @@ export default {
   },
 
     setup(){
+        const parentTask = ref("")
+        const subtask = ref(false)
         const modify = ref(false)
         const router = useRouter()
         const route = useRoute()
@@ -155,6 +184,7 @@ export default {
             lastUpdated: new Date().toISOString().slice(0,16),
             newsfeed: true,
             comments: [],
+            subtasks: ["testing"],
         })
 
         const contributorsStr = ref('')
@@ -170,17 +200,28 @@ export default {
             // if(typeof(route.params.id) != 'undefined'){
             //     taskId.value = route.params.id
             // }
-            if(typeof(route.params.id) == 'undefined'){
-                modify.value = false
-                form.owner = authService.user.email
-                form.contributors.push(form.owner)
-                contributorsStr.value = (form.contributors.join()).replaceAll(',', '\n')
+            if(route.params.parent == ''){
+                console.log("hi?")
+                if(typeof(route.params.id) == 'undefined'){
+                    modify.value = false
+                    form.owner = authService.user.email
+                    form.contributors.push(form.owner)
+                    contributorsStr.value = (form.contributors.join()).replaceAll(',', '\n')
+                    console.log("this")
+                }
+                else{
+                    form.id = route.params.id
+                    modify.value = true
+                    GetTask(form.id)
+                    console.log("that")
+                }
             }
             else{
-                form.id = route.params.id
-                modify.value = true
-                GetTask(form.id)
+                parentTask.value = route.params.id
+                subtask.value = route.params.subtask
+                console.log(route.params.subtask, route.params.id)
             }
+
 
             console.log("asaaa", contributorsStr.value)
         })
@@ -313,6 +354,11 @@ export default {
             console.log("that")
         }
 
+        const CreateSubtask = () => {
+            console.log("hi?")
+            router.push({name: 'Create', params: { parent: form.id, id: ''}})
+        }
+
         return {
             form,
             email,
@@ -320,11 +366,14 @@ export default {
             contributorsStr,
             currentUser,
             commentText,
+            subtask,
+            parentTask,
             GetTask,
             AddContributor,
             SaveTask,
             PostComment,
             CompleteTask,
+            CreateSubtask,
         }
     }
 }
@@ -469,6 +518,25 @@ export default {
 
     .input-subtasks{
         width: 20vw;
+    }
+
+    .input-subtasks-table {
+        height: 21vh !important;
+        overflow-y: scroll;
+        width: 20vw;
+    }
+    .input-subtasks-table table tbody{
+        display: flex;
+        flex-direction: column;
+    }
+
+    .input-subtasks-table table tbody tr{
+        display: flex;
+        flex-direction: row;
+    }
+
+    .input-subtasks-table table tbody tr:hover {
+        cursor: pointer;
     }
 
     .subtasks-element{
