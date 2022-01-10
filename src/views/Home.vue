@@ -385,7 +385,7 @@ export default {
         
         // TaskModifyMode()
         console.log(form)
-        router.push({ name: 'Create', params: {parent: '',id: task.id}})
+        router.push({ name: 'Create', params: {id: task.id}})
       }
       else{
         console.log("completed task")

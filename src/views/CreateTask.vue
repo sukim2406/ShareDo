@@ -17,7 +17,12 @@
         <div class="form-container">
             <div class="form">
                 <div class="form-completed" v-if="modify">
-                    <button @click="CompleteTask">Completed</button>
+                    <div class="form-completed-bar" v-if="openSubtask">
+                        <div class="progress-bar progress-bar-striped bg-success" role="progressbar" :style= "progressStyle" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">{{ progressPercent }}%</div>
+                    </div>
+                    <div class="form-completed-btn" v-else>
+                        <button @click="CompleteTask">Completed</button>
+                    </div>
                 </div>
                 <div class="form-firstline">
                     <div class="input-title">
@@ -54,21 +59,14 @@
                                 </tbody>
                             </table>
                             <table v-else>
-                                <tbody>
-                                    <tr>
-                                        <td>subtask 1</td>
-                                        <td>completed</td>
-                                        <td>1.1.2022</td>
+                                <tbody v-for="task in subTasks" :key="task.id">
+                                    <tr v-if="task.completed">
+                                        <td> {{ task.title }}</td>
+                                        <td> completed</td>
                                     </tr>
-                                    <tr>
-                                        <td>subtask 1</td>
-                                        <td>completed</td>
-                                        <td>1.1.2022</td>
-                                    </tr>
-                                    <tr>
-                                        <td>subtask 1</td>
-                                        <td>completed</td>
-                                        <td>1.1.2022</td>
+                                    <tr v-else @click="ShowTask(task)">
+                                        <td> {{ task.title }}</td>
+                                        <td> {{ task.due }}</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -165,8 +163,14 @@ export default {
   },
 
     setup(){
+        const subtaskTotal = ref(0)
+        const subtaskOpen = ref(0)
+        const progressPercent = ref(0)
+        const progressStyle = ref("")
+        const openSubtask = ref(false)
+        const subTasks = ref([])
         const parentTask = ref("")
-        const subtask = ref(false)
+        const parentSubtask = ref([])
         const modify = ref(false)
         const router = useRouter()
         const route = useRoute()
@@ -184,7 +188,7 @@ export default {
             lastUpdated: new Date().toISOString().slice(0,16),
             newsfeed: true,
             comments: [],
-            subtasks: ["testing"],
+            subtasks: [],
         })
 
         const contributorsStr = ref('')
@@ -200,30 +204,26 @@ export default {
             // if(typeof(route.params.id) != 'undefined'){
             //     taskId.value = route.params.id
             // }
-            if(route.params.parent == ''){
-                console.log("hi?")
-                if(typeof(route.params.id) == 'undefined'){
-                    modify.value = false
-                    form.owner = authService.user.email
-                    form.contributors.push(form.owner)
-                    contributorsStr.value = (form.contributors.join()).replaceAll(',', '\n')
-                    console.log("this")
-                }
-                else{
-                    form.id = route.params.id
-                    modify.value = true
-                    GetTask(form.id)
-                    console.log("that")
-                }
+            if(typeof(route.params.id) == 'undefined'){
+                modify.value = false
+                form.owner = authService.user.email
+                form.contributors.push(form.owner)
+                contributorsStr.value = (form.contributors.join()).replaceAll(',', '\n')
+                console.log("this")
             }
             else{
-                parentTask.value = route.params.id
-                subtask.value = route.params.subtask
-                console.log(route.params.subtask, route.params.id)
+                form.id = route.params.id
+                modify.value = true
+                GetTask(form.id)
+                    .then(async () => {
+                        progressPercent.value = Math.round(((subtaskTotal.value-subtaskOpen.value) / subtaskTotal.value) * 100)
+                        ProgressFunction(progressPercent.value)
+                        console.log(progressPercent.value, subtaskTotal.value, subtaskOpen.value)
+                    })
+                console.log("that")
+
             }
 
-
-            console.log("asaaa", contributorsStr.value)
         })
 
         const GetTask = async (taskId) => {
@@ -237,6 +237,25 @@ export default {
                     form.comments = taskService.doc.data().comments
                     form.owner = taskService.doc.data().owner
                     contributorsStr.value = (form.contributors.join()).replaceAll(',', '\n')
+                    form.subtasks = taskService.doc.data().subtasks
+                    subtaskTotal.value = form.subtasks.length
+                    form.subtasks.forEach(async task => {
+                        await taskService.getTask(task)
+                        .then(async () =>{
+                            await subTasks.value.push(taskService.doc.data())
+                            if(taskService.doc.data().completed == false){
+                                openSubtask.value= true
+                                subtaskOpen.value += 1
+                                console.log("here", subtaskOpen.value)
+                                
+                            }
+                        })
+                        .then(async () =>{
+                            progressPercent.value = Math.round(((subtaskTotal.value-subtaskOpen.value) / subtaskTotal.value) * 100)
+                            ProgressFunction(progressPercent.value)
+                            console.log(progressPercent.value, subtaskTotal.value, subtaskOpen.value)
+                        })
+                    })
                 })
         } 
 
@@ -296,6 +315,7 @@ export default {
                 form.comments = [{'user': currentUser.value, 'comment': 'Task Created', 'time': new Date().toISOString().slice(0,16)}]
                 await createTask({...form})
                     .then(async (result) => {
+                        await taskService.updateTask(result.id, {'id': result.id})
                         await userService.getUserName(authService.user.uid)
                         // console.log("user = ", userService.doc.data())
                         let taskObj = new reactive({
@@ -313,6 +333,15 @@ export default {
                                 })
                             }
                         })
+                        if(parentTask.value){
+                            console.log("taskId = ", result.id)
+                            parentSubtask.value.push(result.id)
+                            console.log("debug", parentSubtask.value)
+                            await taskService.getTask(parentTask.value)
+                                .then(() => {
+                                    taskService.updateTask(parentTask.value,{subtasks: parentSubtask.value})
+                                })
+                        }
                         router.replace('/')
                     })
             }
@@ -355,8 +384,46 @@ export default {
         }
 
         const CreateSubtask = () => {
-            console.log("hi?")
-            router.push({name: 'Create', params: { parent: form.id, id: ''}})
+            if(modify.value){
+                parentTask.value = form.id
+                parentSubtask.value =form.subtasks
+                modify.value = false
+                form.id = ''
+                form.title = ''
+                form.due = new Date().toISOString().slice(0,10)
+                form.description = ''
+                form.completed = false
+                form.lastUpdated = new Date().toISOString().slice(0,16)
+                form.newsfeed = true
+                form.comments = []
+                form.subtasks = []
+                form.contributors = []
+                form.owner = authService.user.email
+                form.contributors.push(form.owner)
+                contributorsStr.value = (form.contributors.join()).replaceAll(',', '\n')
+            }
+            console.log(parentTask.value)
+        }
+
+        const ShowTask = async (task) => {
+            console.log("alskdjalksdj", task)
+            await taskService.getTask(task.id)
+                console.log(taskService.doc.data())
+                form.title = taskService.doc.data().title
+                form.due = taskService.doc.data().due
+                form.description = taskService.doc.data().description
+                form.contributors = taskService.doc.data().contributors
+                form.owner = taskService.doc.data().owner
+                form.lastUpdated = taskService.doc.data().lastUpdated
+                form.completed = taskService.doc.data().completed
+                form.id = task.id
+                form.comments = taskService.doc.data().comments
+                subTasks.value = taskService.doc.data().subtasks
+                openSubtask.value = false
+        }
+
+        const ProgressFunction = (percent) => {
+            progressStyle.value = "width: " + percent + "% ;"
         }
 
         return {
@@ -366,14 +433,21 @@ export default {
             contributorsStr,
             currentUser,
             commentText,
-            subtask,
             parentTask,
+            subTasks,
+            openSubtask,
+            subtaskTotal,
+            subtaskOpen,
+            progressPercent,
+            progressStyle,
             GetTask,
             AddContributor,
             SaveTask,
             PostComment,
             CompleteTask,
             CreateSubtask,
+            ShowTask,
+            ProgressFunction,
         }
     }
 }
@@ -403,10 +477,11 @@ export default {
 
     .title-container{
         width: 80vw;
-        height: 10vh;
+        height: 5vh;
         display: flex;
-        flex-direction: column;
-        justify-content: center;
+        flex-direction: row;
+        justify-content: space-between;
+        
     }
 
     .title-container h1{
@@ -422,7 +497,7 @@ export default {
     }
 
     .form-container {
-        height: 75vh;
+        height: 80vh;
         width: 80vw;
         display: flex;
         flex-direction: column;
@@ -432,9 +507,15 @@ export default {
     .form-completed{
         display: flex;
         justify-content: center;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .form-completed-bar{
+        width: 67vw;
     }
     
-    .form-completed button{
+    .form-completed-btn button{
         width: 67vw;
         border: none;
         border-radius: 50px;
@@ -525,6 +606,10 @@ export default {
         overflow-y: scroll;
         width: 20vw;
     }
+
+    .input-subtasks-table table{
+        width: 100%;
+    }
     .input-subtasks-table table tbody{
         display: flex;
         flex-direction: column;
@@ -533,10 +618,16 @@ export default {
     .input-subtasks-table table tbody tr{
         display: flex;
         flex-direction: row;
+        justify-content: space-evenly;
     }
 
     .input-subtasks-table table tbody tr:hover {
         cursor: pointer;
+        background: #014128;
+    }
+
+    .input-subtasks-table table tbody tr td{
+        background: inherit;
     }
 
     .subtasks-element{
@@ -743,6 +834,14 @@ export default {
         .input-subtasks{
             padding-top: 3vh;
             width: 60vw;
+        }
+
+        .input-subtasks-table{
+            width: 60vw;
+        }
+
+        .input-subtasks-table table{
+            width: 100%;
         }
 
         .subtasks-element button{
