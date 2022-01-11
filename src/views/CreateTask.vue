@@ -12,16 +12,25 @@
             <h4>Date: {{ timestamp }}</h4>
         </div>
         <div class="mobilecompleted-container" v-if="modify">
-            <button @click="CompleteTask">Completed</button>
+            <div class="mobilecompleted-container-bar" v-if="openSubtask">
+                <div class="progress-bar progress-bar-striped bg-success" role="progressbar" :style= "progressStyle" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">{{ progressPercent }}%</div>
+                <p>You must finish all of subtasks first before you can finish this task</p>                
+            </div>
+            <div class="mobilecompleted-container-btn" v-else>
+                <button @click="CompleteTask" v-if="previleged.value">Completed</button>
+                <button v-else disabled style="background: grey"> only contriburos can complete the task</button>
+            </div>
         </div>
         <div class="form-container">
             <div class="form">
                 <div class="form-completed" v-if="modify">
                     <div class="form-completed-bar" v-if="openSubtask">
                         <div class="progress-bar progress-bar-striped bg-success" role="progressbar" :style= "progressStyle" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">{{ progressPercent }}%</div>
+                        <p>You must finish all of subtasks first before you can finish this task</p>
                     </div>
                     <div class="form-completed-btn" v-else>
-                        <button @click="CompleteTask">Completed</button>
+                        <button @click="CompleteTask" v-if="previleged.value">Completed</button>
+                        <button v-else disabled style="background: grey"> only contributors can complete the task </button>
                     </div>
                 </div>
                 <div class="form-firstline">
@@ -112,7 +121,8 @@
                     </div>
                 </div>    
                 <div class="form-btns">
-                    <button @click="SaveTask">Save</button>
+                    <button @click="SaveTask" v-if="previleged.value">Save</button>
+                    <button v-else style="background: grey" disabled>Not a contributor</button>
                     <button>
                         <router-link to="/" style="text-decoration: none; background-color:inherit; color:inherit;">Cancel</router-link> 
                     </button>
@@ -120,7 +130,8 @@
             </div>
         </div>
         <div class="mobilebtn-container">
-            <button @click="SaveTask">Save</button>
+            <button @click="SaveTask" v-if="previleged.value">Save</button>
+            <button v-else style="background: grey" disabled>Not a contributor</button>
             <button>Cancel</button>
         </div>
     </div>
@@ -163,6 +174,8 @@ export default {
   },
 
     setup(){
+        const previleged = ref(true)
+        const parentDue = ref("")
         const subtaskTotal = ref(0)
         const subtaskOpen = ref(0)
         const progressPercent = ref(0)
@@ -227,6 +240,7 @@ export default {
         })
 
         const GetTask = async (taskId) => {
+            CheckPrevilege()
             await taskService.getTask(taskId)
                 .then(() => {
                     form.title = taskService.doc.data().title
@@ -312,6 +326,17 @@ export default {
         const SaveTask = async () => {
             form.lastUpdated = new Date().toISOString().slice(0,16)
             if(!modify.value){
+                if(parentDue.value != ''){
+                    if(!(parentDue.value >= form.due)){
+                        if(confirm("Subtask's due date cannot be later then Parent Task's due. Do you want to set it as same as parent task's due?")){
+                            form.due = parentDue.value
+                        }
+                        else{
+                            return
+                        }
+                    }
+                    console.log("Due Check", parentDue.value, form.due, parentDue.value >= form.due)
+                }
                 form.comments = [{'user': currentUser.value, 'comment': 'Task Created', 'time': new Date().toISOString().slice(0,16)}]
                 await createTask({...form})
                     .then(async (result) => {
@@ -387,6 +412,7 @@ export default {
             if(modify.value){
                 parentTask.value = form.id
                 parentSubtask.value =form.subtasks
+                parentDue.value = form.due
                 modify.value = false
                 form.id = ''
                 form.title = ''
@@ -406,6 +432,7 @@ export default {
         }
 
         const ShowTask = async (task) => {
+            CheckPrevilege()
             console.log("alskdjalksdj", task)
             await taskService.getTask(task.id)
                 console.log(taskService.doc.data())
@@ -413,17 +440,52 @@ export default {
                 form.due = taskService.doc.data().due
                 form.description = taskService.doc.data().description
                 form.contributors = taskService.doc.data().contributors
+                contributorsStr.value = (form.contributors.join()).replaceAll(',', '\n')
                 form.owner = taskService.doc.data().owner
                 form.lastUpdated = taskService.doc.data().lastUpdated
                 form.completed = taskService.doc.data().completed
                 form.id = task.id
                 form.comments = taskService.doc.data().comments
-                subTasks.value = taskService.doc.data().subtasks
+                form.subtasks = taskService.doc.data().subtasks
+                subTasks.value = []
+                form.subtasks.forEach(async task => {
+                    await taskService.getTask(task)
+                    .then(async () =>{
+                        await subTasks.value.push(taskService.doc.data())
+                        if(taskService.doc.data().completed == false){
+                            openSubtask.value= true
+                            subtaskOpen.value += 1
+                            console.log("here", subtaskOpen.value)
+                            
+                        }
+                    })
+                    .then(async () =>{
+                        progressPercent.value = Math.round(((subtaskTotal.value-subtaskOpen.value) / subtaskTotal.value) * 100)
+                        ProgressFunction(progressPercent.value)
+                        console.log(progressPercent.value, subtaskTotal.value, subtaskOpen.value)
+                    })
+                })
                 openSubtask.value = false
         }
 
         const ProgressFunction = (percent) => {
             progressStyle.value = "width: " + percent + "% ;"
+        }
+
+        const CheckPrevilege = () =>{
+            let checksum = false;
+            form.contributors.forEach(contributor =>{
+                if(contributor == authService.user.email){
+                    checksum = true
+                }
+            })
+
+            if(checksum){
+              previleged.value = true  
+            }
+            else{
+                previleged.value = false
+            }
         }
 
         return {
@@ -440,6 +502,8 @@ export default {
             subtaskOpen,
             progressPercent,
             progressStyle,
+            parentDue,
+            previleged,
             GetTask,
             AddContributor,
             SaveTask,
@@ -448,6 +512,7 @@ export default {
             CreateSubtask,
             ShowTask,
             ProgressFunction,
+            CheckPrevilege,
         }
     }
 }
@@ -513,6 +578,7 @@ export default {
 
     .form-completed-bar{
         width: 67vw;
+        background-color: white;
     }
     
     .form-completed-btn button{

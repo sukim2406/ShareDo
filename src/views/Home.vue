@@ -15,7 +15,10 @@
       <div class="progress">
         <div class="progress-bar progress-bar-striped bg-success" role="progressbar" :style = "progressStyle" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">{{ progressPercent}}%</div>
       </div>
-      <p v-if="progressPercent != 100">You have completed {{ tasksCompleted.length }} tasks out of {{ tasks.length + tasksCompleted.length }} tasks</p>
+      <p v-if=" tasks.length + tasksCompleted.length == 0">
+        Create your first task now!
+      </p>
+      <p v-else-if="progressPercent != 100">You have completed {{ tasksCompleted.length }} tasks out of {{ tasks.length + tasksCompleted.length }} tasks</p>
       <p v-else>Great! You have completed all the tasks! Perhaps start a new one?</p>
     </div>
     <div class="body-container">
@@ -516,6 +519,7 @@ export default {
 
       await userService.getUserName(authService.user.uid)
         .then(() => {
+          tasksCompleted.value = []
           LoadTasks()
         })
       // taskIds.value.forEach(async task => {
