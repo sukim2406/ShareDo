@@ -1,5 +1,6 @@
 import { firebaseApp } from './firebase-app'
 import { addUser } from './firebase-store'
+import firebase from 'firebase'
 const auth = firebaseApp.auth()
 
 const initializeAuth = new Promise(resolve => {
@@ -48,5 +49,17 @@ export const authService = {
                 })
             })
             .catch(error => alert(error.message))
+    },
+
+    passwordReset(curPassword, newPassword){
+        let curUser = auth.currentUser
+        const credential = firebase.auth.EmailAuthProvider.credential(curUser.email, curPassword)
+        curUser.reauthenticateWithCredential(credential)
+            .then(() => {
+                curUser.updatePassword(newPassword)
+                    .then(() => {
+                        console.log("password updated")
+                    })
+            })
     }
 }

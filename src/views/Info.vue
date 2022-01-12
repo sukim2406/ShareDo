@@ -4,7 +4,7 @@
   </head>
   <div class="header-container">
     <Header />
-  </div>  
+  </div> 
   <div class="main-container">
     <div class="container">
       <div class="sidebar-container">
@@ -43,8 +43,16 @@
             <div class="info-greet">
               GREET
               <input type="text" v-model="form.greet">
+            </div>
+            <div class="info-newpassword">
+              RESET PASSWORD
+              <input type="password" v-model="form.password">
+            </div>
+            <div class="info-passwordconfirm">
+              PASSWORD CONFIRM
+              <input type="password" v-model="form.passwordConfirm">
             </div>          
-          </div>
+          </div>  
         </div>
         <div class="stat-container">
           <div class="title-container">
@@ -104,6 +112,8 @@ export default {
       name: '',
       depart: '',
       greet: '',
+      password: '',
+      passwordConfirm: '',
     })
 
     onBeforeMount(async () => {
@@ -140,7 +150,18 @@ export default {
     // })
 
     const SaveBtn = () => {
-      Update()
+      if(form.password != ''){
+        if(form.password != form.passwordConfirm){
+          alert("Password does not match")
+          return
+        }
+        else{
+          ResetPassword(form.password)
+        }
+      }
+      else{
+        Update()
+      }
     }
 
     const BackBtn = () =>{
@@ -159,6 +180,17 @@ export default {
         })
     }
 
+    const ResetPassword = async(newPassword) => {
+      console.log("newpassword", newPassword)
+      let curPassword = await prompt("Current Password")
+      if(curPassword === null){ 
+        return
+      }
+      else{
+        await authService.passwordReset(curPassword, newPassword)
+      }
+    }
+
 
     return {
       email,
@@ -171,6 +203,7 @@ export default {
       Update,
       SaveBtn,
       BackBtn,
+      ResetPassword,
     }
   },
 
@@ -336,6 +369,32 @@ export default {
   }
 
   .info-greet input{
+    margin-left: 5vw;
+    width: 30vw;
+  }
+
+  .info-newpassword{
+    color: #009056;
+    display: flex;
+    flex-direction: row;
+    justify-content: end;
+    align-items: center;
+  }
+
+  .info-newpassword input{
+    margin-left: 5vw;
+    width: 30vw;
+  }
+
+  .info-passwordconfirm{
+    color: #009056;
+    display: flex;
+    flex-direction: row;
+    justify-content: end;
+    align-items: center;
+  }
+
+  .info-passwordconfirm input{
     margin-left: 5vw;
     width: 30vw;
   }
