@@ -7,6 +7,9 @@
   </div> 
   <div class="main-container">
     <div class="container">
+      <div class="modal-container" v-if="modalTrigger">
+        <ReauthModal newPassword="newPassword" @accepted = "GetData" @cancel = "ToggleModal"/>
+      </div>
       <div class="sidebar-container">
         <div class="profile-container">
           <div class="profile-picture-container">
@@ -92,14 +95,17 @@ import { taskService, userService } from '../firebase-store'
 import { useRouter } from 'vue-router'
 import Header from '../components/Header.vue'
 import Footer from '../components/Footer.vue'
+import ReauthModal from '../components/ReauthModal.vue'
 
 export default {
   components: {
     Header,
-    Footer
+    Footer,
+    ReauthModal,
   },
 
   setup (){
+    const modalTrigger = ref(false)
     const tasks = ref([])
     const router = useRouter()
     const email = ref('')
@@ -150,18 +156,20 @@ export default {
     // })
 
     const SaveBtn = () => {
-      if(form.password != ''){
-        if(form.password != form.passwordConfirm){
-          alert("Password does not match")
-          return
-        }
-        else{
-          ResetPassword(form.password)
-        }
-      }
-      else{
-        Update()
-      }
+      ToggleModal()
+      console.log("hi")
+      // if(form.password != ''){
+      //   if(form.password != form.passwordConfirm){
+      //     alert("Password does not match")
+      //     return
+      //   }
+      //   else{
+      //     ResetPassword(form.password)
+      //   }
+      // }
+      // else{
+      //   Update()
+      // }
     }
 
     const BackBtn = () =>{
@@ -191,8 +199,17 @@ export default {
       }
     }
 
+    const ToggleModal = () => {
+      modalTrigger.value = !modalTrigger.value
+    }
+
+    const GetData = (value) => {
+      console.log(value)
+    }
+
 
     return {
+      modalTrigger,
       email,
       uid,
       form,
@@ -204,6 +221,8 @@ export default {
       SaveBtn,
       BackBtn,
       ResetPassword,
+      ToggleModal,
+      GetData,
     }
   },
 
