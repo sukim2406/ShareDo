@@ -59,7 +59,9 @@ export const authService = {
                 curUser.updatePassword(newPassword)
                     .then(() => {
                         console.log("password updated")
+                        this.logout()
                     })
+                    .catch(error => alert(error.message))
             })
     }
 }

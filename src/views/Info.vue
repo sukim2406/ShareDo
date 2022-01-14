@@ -156,20 +156,19 @@ export default {
     // })
 
     const SaveBtn = () => {
-      ToggleModal()
-      console.log("hi")
-      // if(form.password != ''){
-      //   if(form.password != form.passwordConfirm){
-      //     alert("Password does not match")
-      //     return
-      //   }
-      //   else{
-      //     ResetPassword(form.password)
-      //   }
-      // }
-      // else{
-      //   Update()
-      // }
+      if(form.password != ''){
+        if(form.password != form.passwordConfirm){
+          alert("Password does not match")
+          return
+        }
+        else{
+          ToggleModal()
+          // ResetPassword(form.password)
+        }
+      }
+      else{
+        Update()
+      }
     }
 
     const BackBtn = () =>{
@@ -188,23 +187,20 @@ export default {
         })
     }
 
-    const ResetPassword = async(newPassword) => {
-      console.log("newpassword", newPassword)
-      let curPassword = await prompt("Current Password")
-      if(curPassword === null){ 
-        return
-      }
-      else{
-        await authService.passwordReset(curPassword, newPassword)
-      }
+    const ResetPassword = async(curPassword, newPassword) => {
+      await authService.passwordReset(curPassword, newPassword)
     }
 
     const ToggleModal = () => {
       modalTrigger.value = !modalTrigger.value
     }
 
-    const GetData = (value) => {
+    const GetData = async (value) => {
       console.log(value)
+      await ResetPassword(value, form.password)
+        .then(() => {
+          modalTrigger.value = !modalTrigger.value
+        })
     }
 
 
