@@ -17,7 +17,7 @@
                 <p>You must finish all of subtasks first before you can finish this task</p>                
             </div>
             <div class="mobilecompleted-container-btn" v-else>
-                <button @click="CompleteTask" v-if="previleged.value">Completed</button>
+                <button @click="CompleteTask" v-if="previleged">Completed</button>
                 <button v-else disabled style="background: grey"> only contriburos can complete the task</button>
             </div>
         </div>
@@ -29,7 +29,7 @@
                         <p>You must finish all of subtasks first before you can finish this task</p>
                     </div>
                     <div class="form-completed-btn" v-else>
-                        <button @click="CompleteTask" v-if="previleged.value">Completed</button>
+                        <button @click="CompleteTask" v-if="previleged">Completed</button>
                         <button v-else disabled style="background: grey"> only contributors can complete the task </button>
                     </div>
                 </div>
@@ -121,7 +121,7 @@
                     </div>
                 </div>    
                 <div class="form-btns">
-                    <button @click="SaveTask" v-if="previleged.value">Save</button>
+                    <button @click="SaveTask" v-if="previleged">Save</button>
                     <button v-else style="background: grey" disabled>Not a contributor</button>
                     <button>
                         <router-link to="/" style="text-decoration: none; background-color:inherit; color:inherit;">Cancel</router-link> 
@@ -130,7 +130,7 @@
             </div>
         </div>
         <div class="mobilebtn-container">
-            <button @click="SaveTask" v-if="previleged.value">Save</button>
+            <button @click="SaveTask" v-if="previleged">Save</button>
             <button v-else style="background: grey" disabled>Not a contributor</button>
             <button>Cancel</button>
         </div>
@@ -193,12 +193,14 @@ export default {
         const form = reactive({
             id: '',
             title: '',
-            due: new Date().toISOString().slice(0,10),
+            // due: new Date().toISOString().slice(0,10),
+            due: new Date().toString().slice(0,24),
             description: '',
             contributors: [],
             owner: '',
             completed: false,
-            lastUpdated: new Date().toISOString().slice(0,16),
+            // lastUpdated: new Date().toISOString().slice(0,16),
+            lastUpdated: new Date().toString().slice(0,24),
             newsfeed: true,
             comments: [],
             subtasks: [],
@@ -207,6 +209,7 @@ export default {
         const contributorsStr = ref('')
 
         onBeforeMount(async () => {
+            console.log("temp", previleged.value)
             await authService.authenticated()
                 .then(async () => {
                     await userService.getUserByEmail(authService.user.email)
@@ -222,7 +225,7 @@ export default {
                 form.owner = authService.user.email
                 form.contributors.push(form.owner)
                 contributorsStr.value = (form.contributors.join()).replaceAll(',', '\n')
-                console.log("this")
+                console.log("this", previleged.value)
             }
             else{
                 form.id = route.params.id
@@ -240,6 +243,7 @@ export default {
         })
 
         const GetTask = async (taskId) => {
+            console.log('comes here')
             CheckPrevilege()
             await taskService.getTask(taskId)
                 .then(() => {
@@ -310,7 +314,8 @@ export default {
                 alert("Comments can be posted after the task has been created")
             }
             else{
-                form.lastUpdated = new Date().toISOString().slice(0,16)
+                // form.lastUpdated = new Date().toISOString().slice(0,16)
+                form.lastUpdated = new Date().toString().slice(0,24)
                 let commentObj = new reactive({
                     user: currentUser.value,
                     time: form.lastUpdated,
@@ -324,7 +329,8 @@ export default {
         }
 
         const SaveTask = async () => {
-            form.lastUpdated = new Date().toISOString().slice(0,16)
+            // form.lastUpdated = new Date().toISOString().slice(0,16)
+            form.lastUpdated = new Date().toString().slice(0,24)
             if(!modify.value){
                 if(parentDue.value != ''){
                     if(!(parentDue.value >= form.due)){
@@ -337,7 +343,7 @@ export default {
                     }
                     console.log("Due Check", parentDue.value, form.due, parentDue.value >= form.due)
                 }
-                form.comments = [{'user': currentUser.value, 'comment': 'Task Created', 'time': new Date().toISOString().slice(0,16)}]
+                form.comments = [{'user': currentUser.value, 'comment': 'Task Created', 'time': new Date().toString().slice(0,24)}]
                 await createTask({...form})
                     .then(async (result) => {
                         await taskService.updateTask(result.id, {'id': result.id})
@@ -396,7 +402,8 @@ export default {
                 let completedComment = reactive({
                     'user': currentUser.value,
                     'comment': 'Task Completed',
-                    'time': new Date().toISOString().slice(0,16)
+                    // 'time': new Date().toISOString().slice(0,16)
+                    'time': new Date().toString().slice(0,24)
                 })
                 form.comments.push(completedComment)
                 form.completed = true
@@ -416,10 +423,12 @@ export default {
                 modify.value = false
                 form.id = ''
                 form.title = ''
-                form.due = new Date().toISOString().slice(0,10)
+                // form.due = new Date().toISOString().slice(0,10)
+                form.due = new Date().toString().slice(0,24)
                 form.description = ''
                 form.completed = false
-                form.lastUpdated = new Date().toISOString().slice(0,16)
+                // form.lastUpdated = new Date().toISOString().slice(0,16)
+                form.lastUpdated = new Date().toString().slice(0,24)
                 form.newsfeed = true
                 form.comments = []
                 form.subtasks = []
@@ -474,11 +483,15 @@ export default {
 
         const CheckPrevilege = () =>{
             let checksum = false;
+            console.log('contributors =', form.contributors)
             form.contributors.forEach(contributor =>{
+                console.log('contributor =', contributor)
                 if(contributor == authService.user.email){
                     checksum = true
                 }
             })
+
+            console.log('checksum = ', checksum)
 
             if(checksum){
               previleged.value = true  

@@ -6,11 +6,10 @@
                     <h1>Reauthentification needed</h1>
                 </div>
                 <div class="modal-body">
-                    <h3>Confirm password</h3>
+                    <h3>Confirm current password</h3>
                     <input type="password" v-model="curPassword">
                 </div>
                 <div class="modal-footer">
-                    Footer
                     <button class="modalBtn" v-on:click="$emit('accepted', curPassword)">Ok</button>
                     <button class="modalBtn" v-on:click="$emit('cancel')">Cancel</button>
                 </div>
@@ -27,7 +26,7 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background-color: rgba(0,0,0, 0.5);
+        background-color: rgba(0,0,0);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -36,6 +35,23 @@
 
     .modal-wrapper{
         width: 80vw;
+    }
+
+    .modal-container{
+        align-items: center;
+        text-align: center;
+    }
+
+    .modalBtn{
+        align-items: center;
+        border: none;
+        width: 15vw;
+        border-radius: 50px;
+        background: #014128;
+        color: white;
+        font-weight: 600;
+        text-transform: uppercase;
+        cursor: pointer;
     }
 
 </style>

@@ -19,7 +19,7 @@
                         </div>
                         <input type="submit" value="Login" class="btn">
                         <p class="social-text">Or Sign in with social platform</p>
-                        <div class="social-media">
+                        <div class="social-media" @click="SnsBtn">
                             <a href="#" class="social-icon">
                                 <i class="fab fa-facebook"></i>
                             </a>
@@ -67,7 +67,7 @@
                         </div>
                         <input type="submit" value="Sign up" class="btn">
                         <p class="social-text">Or Sign up with social platform</p>
-                        <div class="social-media">
+                        <div class="social-media" @click="SnsBtn">
                             <a href="#" class="social-icon">
                                 <i class="fab fa-facebook"></i>
                             </a>
@@ -87,7 +87,7 @@
                     <div class="panel left-panel">
                         <div class="content">
                             <h3>Member of Sharedo?</h3>
-                            <p>alsfkjsadlfkjasd;fljakds;flajsdf;alsdkjfl</p>
+                            <p>Create, share, and manage tasks together!</p>
                             <button class="btn" id="sign-in-btn" @click="SignInMode">Sign in</button>
                         </div>
                         <img src="../assets/signinimg.svg" alt="" class="image">
@@ -95,7 +95,7 @@
                     <div class="panel right-panel">
                         <div class="content">
                             <h3>New to Sharedo?</h3>
-                            <p>alsfkjsadlfkjasd;fljakds;flajsdf;alsdkjfl</p>
+                            <p>Start managing tasks together with others by signing up!</p>
                             <button class="btn" id="sign-up-btn" @click="SignUpMode">Sign up</button>
                         </div>
                         <img src="../assets/signupimg.svg" alt="" class="image">
@@ -153,6 +153,10 @@ export default {
             console.log("buy")
         }
 
+        const SnsBtn = () => {
+            alert("SNS login to be updated")
+        }
+
         return {
             Login,
             Register,
@@ -165,6 +169,7 @@ export default {
             greet,
             SignInMode,
             SignUpMode,
+            SnsBtn,
             mode
         }
     }

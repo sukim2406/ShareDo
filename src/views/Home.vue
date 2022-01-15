@@ -319,6 +319,7 @@ export default {
     const progressStyle = ref("")
 
     onBeforeMount(async () => {
+      // console.log("Date Test" , new Date().toString())
       await authService.authenticated()
         .then(async () => {
           await userService.getUserName(authService.user.uid)
@@ -470,7 +471,8 @@ export default {
 
     const BtnComplete = async () => {
       form.completed = true
-      form.lastUpdated = new Date().toISOString().slice(0,16)
+      // form.lastUpdated = new Date().toISOString().slice(0,16)
+      form.lastUpdated = new Date().toString().slice(0,24)
       await taskService.updateTask(form.id, form)
         .then(() => {
           componentKey.value = !componentKey.value
@@ -485,7 +487,8 @@ export default {
 
     const BtnComment = async () => {
       alert(commentText.value)
-      form.lastUpdated = new Date().toISOString().slice(0,16)
+      // form.lastUpdated = new Date().toISOString().slice(0,16)
+      form.lastUpdate = new Date().toString().slice(0,24)
       let commentObj = new reactive({
         user: currentUserName.value,
         time: form.lastUpdated,
