@@ -100,3 +100,9 @@ export const getTaskInfo = id => {
         })
     
 }
+
+export const getSnapshot = async () => {
+    const snapshot = await tasksCollection.get()
+
+    return snapshot.docs.map(doc => doc.data())
+}

@@ -144,7 +144,7 @@
 import { onBeforeMount, reactive, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { authService } from '../firebase-auth'
-import { createTask, userService, taskService } from '../firebase-store'
+import { createTask, userService, taskService, getSnapshot } from '../firebase-store'
 import firebase from 'firebase'
 import Header from '../components/Header.vue'
 import Footer from '../components/Footer.vue'
@@ -236,7 +236,8 @@ export default {
                         ProgressFunction(progressPercent.value)
                         console.log(progressPercent.value, subtaskTotal.value, subtaskOpen.value)
                     })
-                console.log("that")
+                console.log("onBeforeMount Contributors check", form.contributors)
+                console.log("parent due check = ", parentDue.value)
 
             }
 
@@ -244,12 +245,13 @@ export default {
 
         const GetTask = async (taskId) => {
             console.log('comes here')
-            CheckPrevilege()
             await taskService.getTask(taskId)
                 .then(() => {
+                    console.log('GetTask contributors check', taskService.doc.data().contributors)
                     form.title = taskService.doc.data().title
                     form.due = taskService.doc.data().due
                     form.contributors = taskService.doc.data().contributors
+                    console.log('GetTask contributors check2 ', form.contributors)
                     form.description = taskService.doc.data().description
                     form.lastUpdated = taskService.doc.data().lastUpdated
                     form.comments = taskService.doc.data().comments
@@ -274,7 +276,10 @@ export default {
                             console.log(progressPercent.value, subtaskTotal.value, subtaskOpen.value)
                         })
                     })
+                    console.log('hihihihi')
+                    GetParent()
                 })
+                .then(() => {CheckPrevilege()})
         } 
 
         const AddContributor = async () => {
@@ -331,8 +336,10 @@ export default {
         const SaveTask = async () => {
             // form.lastUpdated = new Date().toISOString().slice(0,16)
             form.lastUpdated = new Date().toString().slice(0,24)
+            console.log('Due Date Check', parentDue.value, form.due, modify.value)
             if(!modify.value){
                 if(parentDue.value != ''){
+                    console.log('Due Check 2', parentDue.value, form.due, parentDue.value >= form.due)
                     if(!(parentDue.value >= form.due)){
                         if(confirm("Subtask's due date cannot be later then Parent Task's due. Do you want to set it as same as parent task's due?")){
                             form.due = parentDue.value
@@ -377,6 +384,18 @@ export default {
                     })
             }
             else{
+                if(parentDue.value != ''){
+                    console.log('Due Check 2', parentDue.value, form.due, parentDue.value >= form.due)
+                    if(!(parentDue.value >= form.due)){
+                        if(confirm("Subtask's due date cannot be later then Parent Task's due. Do you want to set it as same as parent task's due?")){
+                            form.due = parentDue.value
+                        }
+                        else{
+                            return
+                        }
+                    }
+                    console.log("Due Check", parentDue.value, form.due, parentDue.value >= form.due)
+                }
                 await taskService.updateTask(form.id, form)
                 .then(() => {
                     form.contributors.forEach(async contributor=> {
@@ -441,7 +460,6 @@ export default {
         }
 
         const ShowTask = async (task) => {
-            CheckPrevilege()
             console.log("alskdjalksdj", task)
             await taskService.getTask(task.id)
                 console.log(taskService.doc.data())
@@ -474,6 +492,7 @@ export default {
                         console.log(progressPercent.value, subtaskTotal.value, subtaskOpen.value)
                     })
                 })
+                CheckPrevilege()
                 openSubtask.value = false
         }
 
@@ -499,7 +518,22 @@ export default {
             else{
                 previleged.value = false
             }
+
+            console.log("CheckPrevileged function", previleged.value)
         }
+
+        const GetParent = async() => {
+            let tasks = await getSnapshot()
+            console.log('Get Parent tasks', tasks)
+            tasks.forEach(task => {
+                task.subtasks.forEach(subtask => {
+                    if(subtask == form.id){
+                        parentDue.value = task.due
+                        console.log('get parent check = ', parentDue.value)
+                    }
+                })
+            })
+        }   
 
         return {
             form,
@@ -526,6 +560,7 @@ export default {
             ShowTask,
             ProgressFunction,
             CheckPrevilege,
+            GetParent
         }
     }
 }
