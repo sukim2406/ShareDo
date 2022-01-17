@@ -101,156 +101,6 @@
   <div class="footer-container">
     <Footer />
   </div>
-  <!-- <div class="body-container">
-    <div class="container" :class="mode">
-      <div class="tasks-carousel">
-        <div class="carousel slide" data-bs-ride="carousel">
-          <div class="carousel-inner">
-            <div class="carousel-item active">
-              <p>test1</p>
-            </div>
-            <div class="carousel-item">
-              <p>test2</p>
-            </div>
-            <div class="carousel-item">
-              <p>test3</p>
-            </div>
-          </div>
-          <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleControls" data-bs-slide="prev">
-            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-            <span class="visually-hidden">Previous</span>
-          </button>
-          <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleControls" data-bs-slide="next">
-            <span class="carousel-control-next-icon" aria-hidden="true"></span>
-            <span class="visually-hidden">Next</span>
-          </button>
-        </div>
-      </div>
-      <div class="tasks-task">
-        <div class="tasks">
-          <ul class="nav nav-tabs nav-fill">
-            <li class= "nav-item" :key="i" v-for="(column, i) in columns">
-              <a href="#" class="nav-link" :class="{ active: IsActive(column) }" aria-current="page" v-on:click = "SortBy(column)">
-                {{ column }}
-              </a>
-            </li>
-          </ul>
-          <div class="tasks-table">
-            <div class="table-content">
-              <table class="table" v-if="sortKey != 'Completed'">
-                <thead class="thead">
-                  <tr>
-                    <th scope="col">Title</th>
-                    <th scope="col">Due Date</th>
-                    <th scope="col">Last Updated</th>
-                  </tr>
-                </thead>
-                <tbody v-for="task in tasks" :key="task.id">
-                  <tr @click="ShowTask(task)">
-                    <td>{{ task.title }}</td>
-                    <td>{{ task. due }}</td>
-                    <td>{{ task.lastUpdated }} </td>
-                  </tr>
-                </tbody>
-              </table>
-              <table class="table" v-else>
-                <thead class="thead">
-                  <tr>
-                    <th scope="col">Title</th>
-                    <th scope="col">Due Date</th>
-                    <th scope="col">Completed</th>
-                  </tr>
-                </thead>
-                <tbody v-for="task in tasksCompleted" :key="task.id">
-                  <tr @click="ShowTask(task)">
-                    <td>{{ task.title }}</td>
-                    <td>{{ task. due }}</td>
-                    <td>{{ task.lastUpdated }} </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-        <form @submit.prevent="ReloadPage" class="task-form" :key="componentKey">
-          <div class="task-title">
-            <h2 class="title"> {{ form.title }} </h2>
-          </div>
-          <div class="task-due-owner">
-            <div class="task-due">
-              <h5 class="title">Due Date</h5>
-              <div class="input-field">
-                <input type="date" placeholder="Due" v-model="form.due">
-              </div>
-            </div>
-            <div class="task-owner">
-              <h5 class="title">Owner</h5>
-              <div class="input-field">
-                <input type="text" v-model="form.owner">
-              </div>
-            </div>
-          </div>
-          <div class="task-discription">
-            <h5 class="title">Discription</h5>
-            <div class="input-field">
-              <textarea name="" id="description" cols="50" rows="5" v-model="form.description"></textarea>
-            </div>
-          </div>
-          <div class="task-contributors">
-            <h5 class="title">Contributors</h5>
-            <div class="input-field">
-              <textarea name="" id="contributors" cols="50" rows="5" v-model="form.contributors">
-              </textarea>
-            </div>
-          </div>
-          <div class="task-comments">
-            <div class="comments">
-              <table class="table">
-                <tbody v-for="comment in form.comments" :key="comment">
-                  <tr>
-                    <td>{{ comment.user }}</td>
-                    <td>{{ comment.comment }}</td>
-                    <td>{{ comment.time }} </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <div class="comment">
-              <a href="#" class="username">{{currentUserName}}</a>
-              <input type="text" v-model="commentText">
-              <button class="btn-comment" @click="BtnComment">comment</button>
-            </div>
-          </div>
-
-
-
-          <div class="btns">
-            <input type="submit" value="Modify" class="btn">
-            <button class="btn" @click="BtnComplete">Completed</button>
-          </div>
-        </form>
-      </div>
-      <div class="panels-container">
-        <div class="panel left-panel">
-          <div class="content">
-            <h3>View My Tasks</h3>
-            <p>a;skfj;asldjfklksdjc;laksjdc</p>
-            <button class="btn" id="task-list-btn" @click="TaskListMode">See my Tasks</button>
-          </div>
-        </div>
-        <div class="panel right-panel">
-          <div class="content">
-            <h3>Modify / Complete Task</h3>
-            <p>You can modify or mark as completed a task by clicking one from the list</p>
-            <p> ----------- or ----------- </p>
-            <button class="btn" id="task-modify-btn">
-              <router-link to="/create" class="nav-link" style="text-decoration: none; color: inherit;">Create New Task</router-link>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div> -->
 </template>
 
 <script>
@@ -276,6 +126,8 @@ export default {
   },
 
   methods:{
+
+    // Displays current time 
     getNow: function(){
       const today = new Date();
       const date = today.getFullYear() + '-' + (today.getMonth()+1) + '-' + today.getDate()
@@ -318,32 +170,19 @@ export default {
     const progressPercent = ref()
     const progressStyle = ref("")
 
+    // Get user & task data
     onBeforeMount(async () => {
-      // console.log("Date Test" , new Date().toString())
       await authService.authenticated()
         .then(async () => {
           await userService.getUserName(authService.user.uid)
           LoadTasks()
-          // taskIds.value = userService.doc.data().tasks
-          // taskIds.value.forEach(async id => {
-          //   await taskService.getTask(id)
-          //   if(taskService.doc.data().completed == false){
-          //     tasks.value.push({...taskService.doc.data(), id: id})
-          //   }
-          //   else{
-          //     tasksCompleted.value.push({...taskService.doc.data(), id: id})
-          //   }
-          //   // tasks.value.sort((a,b) => new Date(a.lastUpdated) - new Date(b.lastUpdated))
-          //   tasks.value.sort((a,b) => b.title - a.title)
-          //   tasksCompleted.value.sort((a,b) => new Date(a.lastUpdated) - new Date(b.lastUpdated))
-          // })
           currentUserName.value = (userService.doc.data().name)
         })
     })
 
+    // Sort & stores each task 
     const LoadTasks = () => {
       taskIds.value = userService.doc.data().tasks
-      console.log(taskIds.value)
       taskIds.value.forEach(async task => {
         await taskService.getTask(task.id)
         if(taskService.doc.data().completed == false){
@@ -351,9 +190,6 @@ export default {
           if(task.lastUpdated != taskService.doc.data().lastUpdated){
             newsfeedTasks.value.push({...taskService.doc.data(), id: task.id})
           }
-          // if(taskService.doc.data().newsfeed){
-          //   newsfeedTasks.value.push({...taskService.doc.data(), id: id.id})
-          // }
         }
         else{
           tasksCompleted.value.push({...taskService.doc.data(), id: task.id})
@@ -370,10 +206,7 @@ export default {
       authService.logout()
     }
 
-    const Testing = (task) => {
-      console.log(task)
-    }
-
+    // Loads task modifying page with task data
     const ShowTask = async (task) => {
       if(!task.completed){
         await taskService.getTask(task.id)
@@ -387,21 +220,13 @@ export default {
         form.id = task.id
         form.comments = taskService.doc.data().comments
         
-        // TaskModifyMode()
-        console.log(form)
         router.push({ name: 'Create', params: {id: task.id}})
       }
-      else{
-        console.log("completed task")
-      }
-    }
 
-    const TaskListMode = () => {
-      mode.value = ""
-    }
-
-    const TaskModifyMode = () => {
-      mode.value = "modify-mode"
+      // completed task will not be accessable
+      // else{
+      //   console.log("completed task")
+      // }
     }
 
     const SortByLast = () => {
@@ -469,34 +294,16 @@ export default {
       }
     }
 
+
+    // Set task completed
     const BtnComplete = async () => {
       form.completed = true
-      // form.lastUpdated = new Date().toISOString().slice(0,16)
       form.lastUpdated = new Date().toString().slice(0,24)
       await taskService.updateTask(form.id, form)
         .then(() => {
           componentKey.value = !componentKey.value
           LoadTasks()
-          ReloadPage()
         })
-    }
-
-    const ReloadPage = () => {
-      console.log("hi")
-    }
-
-    const BtnComment = async () => {
-      alert(commentText.value)
-      // form.lastUpdated = new Date().toISOString().slice(0,16)
-      form.lastUpdate = new Date().toString().slice(0,24)
-      let commentObj = new reactive({
-        user: currentUserName.value,
-        time: form.lastUpdated,
-        comment: commentText.value
-      })
-      form.comments.push(commentObj)
-
-      await taskService.updateTask(form.id, form)
     }
 
     const ProgressFunction = (percent) => {
@@ -505,6 +312,7 @@ export default {
 
     const BtnMarkAsRead = async (task) => {
       let tempTasks = userService.doc.data().tasks
+
       tempTasks.forEach(tempTask => {
         if(tempTask.id == task.id){
           tempTask.lastUpdated = task.lastUpdated
@@ -513,8 +321,6 @@ export default {
       await userService.updateUser({
         tasks: tempTasks
       })
-
-      console.log('testing' , tempTasks)
 
       taskIds.value.splice(0)
       tasks.value.splice(0)
@@ -525,24 +331,6 @@ export default {
           tasksCompleted.value = []
           LoadTasks()
         })
-      // taskIds.value.forEach(async task => {
-      //   await taskService.getTask(task.id)
-      //   if(taskService.doc.data().completed == false){
-      //     if(task.lastUpdated != taskService.doc.data().lastUpdated){
-      //       newsfeedTasks.value.push({...taskService.doc.data(), id: task.id})
-      //     }
-      //   }
-      // })
-      
-      // newsfeedTasks.value.sort((a,b) => new Date(b.lastUpdated) - new Date(a.lastUpdated))
-
-
-      
-    }
-
-    const ForceReload = () => {
-      reloadKey.value += 1
-      console.log("hello?" , reloadKey.value)
     }
 
     return {
@@ -565,21 +353,15 @@ export default {
       progressStyle,
       Logout,
       ShowTask,
-      TaskListMode,
-      TaskModifyMode,
       SortByLast,
       SortByDue,
       SortByTitle,
       SortBy,
       IsActive,
-      Testing,
       BtnComplete,
       LoadTasks,
-      ReloadPage,
-      BtnComment,
       ProgressFunction,
       BtnMarkAsRead,
-      ForceReload,
     }
   }
 }
@@ -807,259 +589,5 @@ export default {
       height: 25vh !important;
       overflow-y: scroll;
     }
-  }
-  /* -------------------------------------------- */
-  /* .body-container{
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 95vh;
-    background: #000;
-  } */
-  
-  .container{
-    position: relative;
-    width: 100vw;
-    height: 90vh;
-    background: #000;
-    border-radius: 10px;
-    box-shadow: 0 4px 20px 0 rgba(0,0,0,0.3), 0, 6px 20px 0 rgba(0,0,0,0.3);
-    overflow: hidden;
-  }
-
-  .container::before{
-    content: "";
-    position: absolute;
-    top: 0;
-    left: -50%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(-45deg, #009056, #014128);
-    z-index: 6;
-    transform: translateX(100%);
-    transition: 1s ease-in-out;
-  }
-
-  .tasks-task{
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-around;
-    z-index: 5;
-  }
-
-  .tasks{
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    width: 40%;
-    min-height: 238px;
-    padding: 0 10px;
-    opacity: 1;
-    transition: 0.5s ease-in-out;
-    transition-delay: 1s;
-  }
-
-  .tasks ul li a{
-    color: white;
-    text-decoration: none;
-  }
-
-  .tasks ul {
-    min-width: 100%;
-  }
-
-  .tasks-table{
-    min-width: 100%;
-  }
-
-  .tasks-table th{
-    color: #fff;
-  }
-
-  .tasks-table tbody tr:hover{
-    background: #014128;
-  }
-
-  .tasks-table td{
-    color: #fff;
-  }
-
-  form.task-form{
-    opacity: 0;
-    transition: 0.5s ease-in-out;
-    transition-delay: 1s;
-  }
-
-  .task-due-owner{
-    display: flex;
-    justify-content: space-between;
-  }
-
-  .comments{
-    height: 100px !important;
-    overflow: scroll;
-  }
-
-  .comment{
-    display: flex;
-    padding: 10px;
-    margin-bottom: 10px;
-    align-items: center;
-    color: #333;
-    background-color: #f2f2f2;
-    border-radius: 30px;
-    box-shadow: 1px 1px 3px rgba(0,0,0, 0.2);
-    justify-content: space-between;
-  }
-
-  .input-field{
-    width: 100%;
-    margin: 10px 0;
-    border: 2px solid #009056;
-    border-radius: 50px;
-    display: flex;
-    align-items: center;
-  }
-
-  .input-field input, textarea {
-    flex: 5;
-    background: none;
-    border: none;
-    outline: none;
-    width: 100%;
-    font-size: 15px;
-    font-weight: 600;
-    color: #444;
-    text-align: center;
-  }
-
-  .title{
-    color: #009056
-  }
-
-  .btns{
-    display: flex;
-    justify-content: space-between;
-  }
-
-
-
-  /* .btn{
-    width: 150px;
-    height: 50px;
-    border: none;
-    border-radius: 50px;
-    background: #014128;
-    color: #fff;
-    font-weight: 600;
-    margin: 10px 0;
-    text-transform: uppercase;
-    cursor: pointer;
-  } */
-
-  .btn-comment{
-    width: 100px;
-    height: 30px;
-    border: none;
-    border-radius: 25px;
-    background: #014128;
-    color: #fff;
-    font-weight: 200;
-    margin: 10px 0;
-    text-transform: uppercase;
-    cursor: pointer;
-  }
-
-  .btn:hover, .btn-comment:hover{
-    background: #009056;
-  }
-
-  .panels-container{
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-around;
-  }
-
-  .panel {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-around;
-    width: 35%;
-    min-width: 238px;
-    padding: 0 10px;
-    text-align: center;
-    z-index: 6;
-  }
-
-  .left-panel{
-    pointer-events: none;
-  }
-
-  .content{
-    color: #fff;
-    transition: 1.1s ease-in-out;
-    transition-delay: .5s;
-  }
-
-  .panel h3{
-    font-size: 24px;
-    font-weight: 600;
-  }
-
-  .panel p{
-    font-size: 15px;
-    padding: 10px 0;
-  }
-
-  .left-panel .image,
-  .left-panel .content{
-    transform: translateX(-250%)
-  }
-
-  .right-panel .image,
-  .right-panel .content{
-    transform: translateX(0)
-  }
-
-  .container.modify-mode::before{
-    transform: translateX(0);
-  }
-
-  .container.modify-mode .right-panel .image,
-  .container.modify-mode .right-panel .content {
-    transform: translateX(250%)
-  }
-
-  .container.modify-mode .left-panel .image,
-  .container.modify-mode .left-panel .content {
-    transform: translateX(0);
-  }
-
-  .container.modify-mode div.table-content{
-    opacity: 0;
-  }
-
-  .container.modify-mode form.task-form{
-    opacity: 1;
-  }
-
-  .container.modify-mode .right-panel{
-    pointer-events: none;
-  }
-
-  .container.modify-mode .left-panel{
-    pointer-events: all;
   }
 </style>

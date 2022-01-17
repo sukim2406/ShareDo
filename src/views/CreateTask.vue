@@ -193,23 +193,22 @@ export default {
         const form = reactive({
             id: '',
             title: '',
-            // due: new Date().toISOString().slice(0,10),
             due: new Date().toString().slice(0,24),
             description: '',
             contributors: [],
             owner: '',
             completed: false,
-            // lastUpdated: new Date().toISOString().slice(0,16),
             lastUpdated: new Date().toString().slice(0,24),
             newsfeed: true,
             comments: [],
             subtasks: [],
         })
-
         const contributorsStr = ref('')
 
+        // Makes sure user is authenticated.
+        // if user is creating new task, initialize empty form,
+        // else if user is modifying existing task, load task data through GetTask function
         onBeforeMount(async () => {
-            console.log("temp", previleged.value)
             await authService.authenticated()
                 .then(async () => {
                     await userService.getUserByEmail(authService.user.email)
@@ -217,15 +216,11 @@ export default {
                             currentUser.value = userService.doc.data().name
                         })
                 })
-            // if(typeof(route.params.id) != 'undefined'){
-            //     taskId.value = route.params.id
-            // }
             if(typeof(route.params.id) == 'undefined'){
                 modify.value = false
                 form.owner = authService.user.email
                 form.contributors.push(form.owner)
                 contributorsStr.value = (form.contributors.join()).replaceAll(',', '\n')
-                console.log("this", previleged.value)
             }
             else{
                 form.id = route.params.id
@@ -234,24 +229,17 @@ export default {
                     .then(async () => {
                         progressPercent.value = Math.round(((subtaskTotal.value-subtaskOpen.value) / subtaskTotal.value) * 100)
                         ProgressFunction(progressPercent.value)
-                        console.log(progressPercent.value, subtaskTotal.value, subtaskOpen.value)
                     })
-                console.log("onBeforeMount Contributors check", form.contributors)
-                console.log("parent due check = ", parentDue.value)
-
             }
-
         })
 
+        // gets task data, populates the form, if theres any subtasks calculate the completion percentage as well
         const GetTask = async (taskId) => {
-            console.log('comes here')
             await taskService.getTask(taskId)
                 .then(() => {
-                    console.log('GetTask contributors check', taskService.doc.data().contributors)
                     form.title = taskService.doc.data().title
                     form.due = taskService.doc.data().due
                     form.contributors = taskService.doc.data().contributors
-                    console.log('GetTask contributors check2 ', form.contributors)
                     form.description = taskService.doc.data().description
                     form.lastUpdated = taskService.doc.data().lastUpdated
                     form.comments = taskService.doc.data().comments
@@ -266,22 +254,21 @@ export default {
                             if(taskService.doc.data().completed == false){
                                 openSubtask.value= true
                                 subtaskOpen.value += 1
-                                console.log("here", subtaskOpen.value)
                                 
                             }
                         })
                         .then(async () =>{
                             progressPercent.value = Math.round(((subtaskTotal.value-subtaskOpen.value) / subtaskTotal.value) * 100)
                             ProgressFunction(progressPercent.value)
-                            console.log(progressPercent.value, subtaskTotal.value, subtaskOpen.value)
                         })
                     })
-                    console.log('hihihihi')
                     GetParent()
                 })
                 .then(() => {CheckPrevilege()})
         } 
 
+        // Checks database for the user email address
+        // the owner will alway be a contributor
         const AddContributor = async () => {
             let duplicate = false
 
@@ -307,26 +294,23 @@ export default {
                             form.contributors.push(email.value)
                             contributorsStr.value = (form.contributors.join()).replaceAll(',', '\n')
                         }
-
                         userService.resetDoc()
                     }
                 })
-            console.log(form.contributors)
         }
 
+        // stores comment object to the database
         const PostComment = async () => {
             if(!modify.value){
                 alert("Comments can be posted after the task has been created")
             }
             else{
-                // form.lastUpdated = new Date().toISOString().slice(0,16)
                 form.lastUpdated = new Date().toString().slice(0,24)
                 let commentObj = new reactive({
                     user: currentUser.value,
                     time: form.lastUpdated,
                     comment: commentText.value
                 })
-                console.log(commentObj)
                 form.comments.push(commentObj)
 
                 await taskService.updateTask(form.id, form)
@@ -334,12 +318,12 @@ export default {
         }
 
         const SaveTask = async () => {
-            // form.lastUpdated = new Date().toISOString().slice(0,16)
             form.lastUpdated = new Date().toString().slice(0,24)
-            console.log('Due Date Check', parentDue.value, form.due, modify.value)
+
+            // creating new task
             if(!modify.value){
+                // when new task has a parent task
                 if(parentDue.value != ''){
-                    console.log('Due Check 2', parentDue.value, form.due, parentDue.value >= form.due)
                     if(!(parentDue.value >= form.due)){
                         if(confirm("Subtask's due date cannot be later then Parent Task's due. Do you want to set it as same as parent task's due?")){
                             form.due = parentDue.value
@@ -348,14 +332,12 @@ export default {
                             return
                         }
                     }
-                    console.log("Due Check", parentDue.value, form.due, parentDue.value >= form.due)
                 }
                 form.comments = [{'user': currentUser.value, 'comment': 'Task Created', 'time': new Date().toString().slice(0,24)}]
                 await createTask({...form})
                     .then(async (result) => {
                         await taskService.updateTask(result.id, {'id': result.id})
                         await userService.getUserName(authService.user.uid)
-                        // console.log("user = ", userService.doc.data())
                         let taskObj = new reactive({
                             id: result.id,
                             lastUpdated: '',
@@ -372,9 +354,7 @@ export default {
                             }
                         })
                         if(parentTask.value){
-                            console.log("taskId = ", result.id)
                             parentSubtask.value.push(result.id)
-                            console.log("debug", parentSubtask.value)
                             await taskService.getTask(parentTask.value)
                                 .then(() => {
                                     taskService.updateTask(parentTask.value,{subtasks: parentSubtask.value})
@@ -383,9 +363,10 @@ export default {
                         router.replace('/')
                     })
             }
+            // updating existing task
             else{
+                // when the task has parent task, current task's due cannot be later than parent task's due
                 if(parentDue.value != ''){
-                    console.log('Due Check 2', parentDue.value, form.due, parentDue.value >= form.due)
                     if(!(parentDue.value >= form.due)){
                         if(confirm("Subtask's due date cannot be later then Parent Task's due. Do you want to set it as same as parent task's due?")){
                             form.due = parentDue.value
@@ -394,7 +375,6 @@ export default {
                             return
                         }
                     }
-                    console.log("Due Check", parentDue.value, form.due, parentDue.value >= form.due)
                 }
                 await taskService.updateTask(form.id, form)
                 .then(() => {
@@ -416,12 +396,12 @@ export default {
 
         }
 
+        // Set task as completed
         const CompleteTask = async () =>{
             if(confirm("Task Completed? (Cannot be undone)")){
                 let completedComment = reactive({
                     'user': currentUser.value,
                     'comment': 'Task Completed',
-                    // 'time': new Date().toISOString().slice(0,16)
                     'time': new Date().toString().slice(0,24)
                 })
                 form.comments.push(completedComment)
@@ -431,9 +411,9 @@ export default {
                         router.replace('/')
                     })
             }
-            console.log("that")
         }
 
+        // When subtask is being created, parent task's id and due should be stored within subtask's data
         const CreateSubtask = () => {
             if(modify.value){
                 parentTask.value = form.id
@@ -442,11 +422,9 @@ export default {
                 modify.value = false
                 form.id = ''
                 form.title = ''
-                // form.due = new Date().toISOString().slice(0,10)
                 form.due = new Date().toString().slice(0,24)
                 form.description = ''
                 form.completed = false
-                // form.lastUpdated = new Date().toISOString().slice(0,16)
                 form.lastUpdated = new Date().toString().slice(0,24)
                 form.newsfeed = true
                 form.comments = []
@@ -456,61 +434,53 @@ export default {
                 form.contributors.push(form.owner)
                 contributorsStr.value = (form.contributors.join()).replaceAll(',', '\n')
             }
-            console.log(parentTask.value)
         }
 
+        // Used when accessing subtask's task page from parent task's task page
         const ShowTask = async (task) => {
-            console.log("alskdjalksdj", task)
             await taskService.getTask(task.id)
-                console.log(taskService.doc.data())
-                form.title = taskService.doc.data().title
-                form.due = taskService.doc.data().due
-                form.description = taskService.doc.data().description
-                form.contributors = taskService.doc.data().contributors
-                contributorsStr.value = (form.contributors.join()).replaceAll(',', '\n')
-                form.owner = taskService.doc.data().owner
-                form.lastUpdated = taskService.doc.data().lastUpdated
-                form.completed = taskService.doc.data().completed
-                form.id = task.id
-                form.comments = taskService.doc.data().comments
-                form.subtasks = taskService.doc.data().subtasks
-                subTasks.value = []
-                form.subtasks.forEach(async task => {
-                    await taskService.getTask(task)
-                    .then(async () =>{
-                        await subTasks.value.push(taskService.doc.data())
-                        if(taskService.doc.data().completed == false){
-                            openSubtask.value= true
-                            subtaskOpen.value += 1
-                            console.log("here", subtaskOpen.value)
-                            
-                        }
-                    })
-                    .then(async () =>{
-                        progressPercent.value = Math.round(((subtaskTotal.value-subtaskOpen.value) / subtaskTotal.value) * 100)
-                        ProgressFunction(progressPercent.value)
-                        console.log(progressPercent.value, subtaskTotal.value, subtaskOpen.value)
-                    })
+            form.title = taskService.doc.data().title
+            form.due = taskService.doc.data().due
+            form.description = taskService.doc.data().description
+            form.contributors = taskService.doc.data().contributors
+            contributorsStr.value = (form.contributors.join()).replaceAll(',', '\n')
+            form.owner = taskService.doc.data().owner
+            form.lastUpdated = taskService.doc.data().lastUpdated
+            form.completed = taskService.doc.data().completed
+            form.id = task.id
+            form.comments = taskService.doc.data().comments
+            form.subtasks = taskService.doc.data().subtasks
+            subTasks.value = []
+            form.subtasks.forEach(async task => {
+                await taskService.getTask(task)
+                .then(async () =>{
+                    await subTasks.value.push(taskService.doc.data())
+                    if(taskService.doc.data().completed == false){
+                        openSubtask.value= true
+                        subtaskOpen.value += 1
+                    }
                 })
-                CheckPrevilege()
-                openSubtask.value = false
+                .then(async () =>{
+                    progressPercent.value = Math.round(((subtaskTotal.value-subtaskOpen.value) / subtaskTotal.value) * 100)
+                    ProgressFunction(progressPercent.value)
+                })
+            })
+            CheckPrevilege()
+            openSubtask.value = false
         }
 
         const ProgressFunction = (percent) => {
             progressStyle.value = "width: " + percent + "% ;"
         }
 
+        // Checks current user is a contributor in viewing task
         const CheckPrevilege = () =>{
             let checksum = false;
-            console.log('contributors =', form.contributors)
             form.contributors.forEach(contributor =>{
-                console.log('contributor =', contributor)
                 if(contributor == authService.user.email){
                     checksum = true
                 }
             })
-
-            console.log('checksum = ', checksum)
 
             if(checksum){
               previleged.value = true  
@@ -518,18 +488,14 @@ export default {
             else{
                 previleged.value = false
             }
-
-            console.log("CheckPrevileged function", previleged.value)
         }
 
         const GetParent = async() => {
             let tasks = await getSnapshot()
-            console.log('Get Parent tasks', tasks)
             tasks.forEach(task => {
                 task.subtasks.forEach(subtask => {
                     if(subtask == form.id){
                         parentDue.value = task.due
-                        console.log('get parent check = ', parentDue.value)
                     }
                 })
             })

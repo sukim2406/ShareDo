@@ -6,7 +6,7 @@ const tasksCollection = db.collection('tasks')
 
 export const addUser = userData => {
     return usersCollection.add({...userData})
-        .catch(error => alert(error.message))
+        .catch(error => alert("Error", error.message))
 }
 
 export const getUserInfo = uid => {
@@ -14,12 +14,11 @@ export const getUserInfo = uid => {
         .get()
         .then((querySnapshot) => {
             querySnapshot.forEach((doc) => {
-                // console.log(doc.id, " => ", doc.data())
                 return doc.data.name
             })
         })
         .catch((error) => {
-            console.log("Error getting documents", error)
+            alert("Error", error.message)
         })
 }
 
@@ -39,7 +38,7 @@ export const userService = {
     updateUser(user) {
         return usersCollection.doc(this.doc.id).update(user)
             .catch((error) => {
-                console.log("Error updating user info", error)
+                alert("Error", error.message)
             })
     },
 
@@ -49,10 +48,9 @@ export const userService = {
             .then((querySnapshot) => {
                 querySnapshot.forEach((doc) => {
                     this.doc = doc
-                    console.log(doc.data())
                 })
             })
-            .catch((error) => alert("Error", error))
+            .catch((error) => alert("Error", error.message))
     },
 
     resetDoc() {
@@ -64,7 +62,7 @@ export const userService = {
 
 export const createTask = taskData => {
     return tasksCollection.add({...taskData})
-        .catch(error => alert(error.message))
+        .catch(error => alert("Error", error.message))
 }
 
 export const taskService = {
@@ -80,11 +78,8 @@ export const taskService = {
 
     updateTask(id, taskData){
         return tasksCollection.doc(id).update(taskData)
-            .then(()=> {
-                console.log("Document successfully updated!")
-            })
             .catch((error) => {
-                console.error("Error updating document: ", error)
+                alert("Error", error.message)
             })
     }
 }
@@ -92,11 +87,8 @@ export const taskService = {
 export const getTaskInfo = id => {
     return tasksCollection.doc(id)
         .get()
-        .then((doc) => {
-            console.log("doc = ", doc.data())
-        })
         .catch((error) => {
-            console.log("Error getting task info", error)
+            alert("Error", error.message)
         })
     
 }

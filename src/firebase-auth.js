@@ -25,20 +25,17 @@ export const authService = {
 
     login(email, password) {
         return auth.signInWithEmailAndPassword(email, password)
-            .then(console.log("logged in as ", this.user.email))
             .catch(error => alert(error.message))
     },
 
     logout() {
-        auth.signOut().then(() =>{
-            console.log('logged out')
-        })
+        auth.signOut()
+            .catch(error => alert(error.message))
     },
 
     register(email, password, name, department, greet) {
         auth.createUserWithEmailAndPassword(email, password)
             .then((userCredential) => {
-                console.log("logged in as ", userCredential.user.email)
                 addUser({
                     uid: userCredential.user.uid,
                     email: userCredential.user.email,
@@ -58,7 +55,6 @@ export const authService = {
             .then(() => {
                 curUser.updatePassword(newPassword)
                     .then(() => {
-                        console.log("password updated")
                         this.logout()
                     })
                     .catch(error => alert(error.message))

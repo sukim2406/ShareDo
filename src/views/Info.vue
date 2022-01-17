@@ -149,11 +149,6 @@ export default {
             })
         })
     })
-    // onUpdated(async () =>{
-    //   await userService.getUserName(uid.value)
-    //   name.value = userService.doc.name
-    //   console.log("this", name.value)
-    // })
 
     const SaveBtn = () => {
       if(form.password != ''){
@@ -163,7 +158,6 @@ export default {
         }
         else{
           ToggleModal()
-          // ResetPassword(form.password)
         }
       }
       else{
@@ -196,7 +190,6 @@ export default {
     }
 
     const GetData = async (value) => {
-      console.log(value)
       await ResetPassword(value, form.password)
         .then(() => {
           modalTrigger.value = !modalTrigger.value

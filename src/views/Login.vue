@@ -145,12 +145,10 @@ export default {
 
         const SignInMode = () => {
             mode.value = ""
-            console.log("hi")
         }
 
         const SignUpMode = () => {
             mode.value = "sign-up-mode"
-            console.log("buy")
         }
 
         const SnsBtn = () => {
