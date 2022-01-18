@@ -1,7 +1,8 @@
 <template>
     <div class="footer-container">
-        <p>Footer will go here</p>
-        <p>example text</p>
+        <p>Soun Sean Kim's Personal Project - sukim2406@gmail.com</p>
+        <p>Vue-Firebase webapp</p>
+        <p></p>
     </div>
 </template>
 
@@ -10,6 +11,8 @@
         height: 10vh;
         text-align: center;
         background-color: black;
-        color: grey
+        color: grey;
+        display: flex;
+        flex-direction: column;
     }
-</style>
+</style>    
